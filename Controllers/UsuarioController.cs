@@ -65,6 +65,11 @@ namespace ApiBiblioteca.Controllers
                     return BadRequest(new { mensaje = "Datos de registro inválidos", errores = ModelState.Values.SelectMany(v => v.Errors) });
                 }
 
+
+                // Verificar si la cedula ya existe
+                var cedulaExistente = await _context.Usuarios
+                    .FirstOrDefaultAsync(u => u.cedula == registro.cedula);
+
                 // Verificar si el email ya existe
                 var usuarioExistente = await _context.Usuarios
                     .FirstOrDefaultAsync(u => u.Email == registro.Email);
@@ -72,6 +77,11 @@ namespace ApiBiblioteca.Controllers
                 if (usuarioExistente != null)
                 {
                     return Conflict(new { mensaje = "El email ya está registrado" });
+                }
+
+                if (cedulaExistente != null)
+                {
+                    return Conflict(new { mensaje = "la cedula ya está registrado" });
                 }
 
                 //// Validar que se hayan proporcionado roles
@@ -98,6 +108,7 @@ namespace ApiBiblioteca.Controllers
                 {
                     Nombre = registro.Nombre,
                     Email = registro.Email,
+                    cedula = registro.cedula,
                     Password = passwordHash,
                     FechaRegistro = DateTime.Now.Date,
                     Estado = "Activo"
