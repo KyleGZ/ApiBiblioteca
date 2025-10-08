@@ -25,6 +25,37 @@ namespace ApiBiblioteca.Controllers
         return await _context.Usuarios.ToListAsync();
         }
 
+        [HttpGet("Listar")]
+        public async Task<IActionResult> ListarUsuarios()
+        {
+            try
+            {
+                var usuarios = await _context.Usuarios
+                    .Select(u => new UsuarioListaDto
+                    {
+                        IdUsuario = u.IdUsuario,
+                        Cedula = u.cedula,
+                        Nombre = u.Nombre,
+                        Email = u.Email,
+                        Estado = u.Estado,
+                        
+                    })
+                    .OrderBy(u => u.Nombre) // Ordenar por nombre
+                    .ToListAsync();
+
+                return Ok(new
+                {
+                    mensaje = "Lista de usuarios obtenida exitosamente",
+                    totalUsuarios = usuarios.Count,
+                    usuarios = usuarios
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { mensaje = "Error interno del servidor", error = ex.Message });
+            }
+        }
+
 
         /*
          * Metodo para iniciar sesion
