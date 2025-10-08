@@ -6,6 +6,7 @@ namespace ApiBiblioteca.Models;
 public partial class Usuario
 {
     public int IdUsuario { get; set; }
+    public string cedula { get; set; } = null!;
 
     public string Nombre { get; set; } = null!;
 
