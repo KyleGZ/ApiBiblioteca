@@ -170,6 +170,7 @@ namespace ApiBiblioteca.Services
                 Token = tokenCreado,
                 Resultado = true,
                 Msj = "OK",
+                idUsuario = temp.IdUsuario,
                 Email = temp.Email,
                 Nombre = temp.Nombre,
                 Roles = roles

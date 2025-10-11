@@ -31,6 +31,7 @@ namespace ApiBiblioteca.Controllers
             try
             {
                 var usuarios = await _context.Usuarios
+                    .Include(u => u.IdRols)
                     .Select(u => new UsuarioListaDto
                     {
                         IdUsuario = u.IdUsuario,
@@ -38,9 +39,10 @@ namespace ApiBiblioteca.Controllers
                         Nombre = u.Nombre,
                         Email = u.Email,
                         Estado = u.Estado,
+                        Roles = u.IdRols.Select(ur => ur.NombreRol).ToList()
                         
                     })
-                    .OrderBy(u => u.Nombre) // Ordenar por nombre
+                    .OrderBy(u => u.IdUsuario) 
                     .ToListAsync();
 
                 return Ok(new

@@ -29,6 +29,26 @@ namespace ApiBiblioteca.Controllers
             return Ok(roles);
         }
 
+        [HttpGet("ObtenerRolesDeUsuario/{idUsuario}")]
+        public async Task<IActionResult> ObtenerRolesDeUsuario(int idUsuario)
+        {
+            try
+            {
+                var roles = await _context.Usuarios
+               .Where(u => u.IdUsuario == idUsuario)
+               .SelectMany(u => u.IdRols)
+               .Select(r => r.NombreRol)
+               .ToListAsync();
+
+                return Ok(roles);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { mensaje = "Error interno del servidor", error = ex.Message });
+            }
+        }
+
+
         [HttpPost("AsignarRolAUsuario")]
         public async Task<IActionResult> AsignarRolAUsuario(int idUsuario, int idRol)
         {
