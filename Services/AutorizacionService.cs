@@ -47,75 +47,17 @@ namespace ApiBiblioteca.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        //public async Task<AutorizacionResponse> DevolverToken(Login usuario)
-        //{
-        //    // Buscar el usuario incluyendo la relación con roles
-        //    var temp = await _context.Usuarios
-        //        .Include(u => u.IdRols)  // Incluir los roles directamente
-        //        .FirstOrDefaultAsync(u => u.Email.Equals(usuario.Email) && u.Password.Equals(usuario.Password));
-
-        //    if (temp == null)
-        //    {
-        //        return new AutorizacionResponse()
-        //        {
-        //            Token = null,
-        //            Resultado = false,
-        //            Msj = "Credenciales inválidas"
-        //        };
-        //    }
-
-        //    // Verificar la contraseña usando BCrypt
-        //    if (!BCrypt.Net.BCrypt.Verify(usuario.Password, temp.Password))
-        //    {
-        //        return new AutorizacionResponse()
-        //        {
-        //            Token = null,
-        //            Resultado = false,
-        //            Msj = "Credenciales inválidas"
-        //        };
-        //    }
-
-        //    // Obtener todos los roles del usuario
-        //    var roles = temp.IdRols?
-        //        .Select(r => r.NombreRol)  // Usar NombreRol según tu modelo
-        //        .Where(rol => !string.IsNullOrEmpty(rol))
-        //        .ToList() ?? new List<string>();
-
-        //    // Si no tiene roles, puedes manejarlo como quieras
-        //    if (!roles.Any())
-        //    {
-        //        return new AutorizacionResponse()
-        //        {
-        //            Token = null,
-        //            Resultado = false,
-        //            Msj = "El usuario no tiene roles asignados"
-        //        };
-        //    }
-
-        //    // Generar token con los roles
-        //    string tokenCreado = GenerarToken(temp.Email, roles);
-
-        //    return new AutorizacionResponse()
-        //    {
-        //        Token = tokenCreado,
-        //        Resultado = true,
-        //        Msj = "OK",  // Corregido: era "Msg" en lugar de "Msj"
-        //        Email = temp.Email,
-        //        Nombre = temp.Nombre,
-        //        Roles = roles
-        //    };
-        //}
         public async Task<AutorizacionResponse> DevolverToken(Login usuario)
         {
-            // Buscar el usuario solo por email (sin verificar contraseña en la consulta)
+            // Buscar el usuario por email (incluyendo roles)
             var temp = await _context.Usuarios
-                .Include(u => u.IdRols)  // Incluir los roles directamente
+                .Include(u => u.IdRols)
                 .FirstOrDefaultAsync(u => u.Email.Equals(usuario.Email));
 
-            // Si no se encuentra el usuario, retornar error
+            // Usuario no existe
             if (temp == null)
             {
-                return new AutorizacionResponse()
+                return new AutorizacionResponse
                 {
                     Token = null,
                     Resultado = false,
@@ -123,10 +65,10 @@ namespace ApiBiblioteca.Services
                 };
             }
 
-            // Verificar la contraseña usando BCrypt
+            // Verificar contraseña
             if (!BCrypt.Net.BCrypt.Verify(usuario.Password, temp.Password))
             {
-                return new AutorizacionResponse()
+                return new AutorizacionResponse
                 {
                     Token = null,
                     Resultado = false,
@@ -134,27 +76,28 @@ namespace ApiBiblioteca.Services
                 };
             }
 
-            // Verificar que el usuario esté activo
-            //if (temp.Estado != "activo")
-            //{
-            //    return new AutorizacionResponse()
-            //    {
-            //        Token = null,
-            //        Resultado = false,
-            //        Msj = "El usuario no está activo"
-            //    };
-            //}
+            // Bloquear si el usuario está Inactivo (ignorar mayúsculas/minúsculas y espacios)
+            var estado = (temp.Estado ?? string.Empty).Trim();
+            if (estado.Equals("Inactivo", StringComparison.OrdinalIgnoreCase))
+            {
+                return new AutorizacionResponse
+                {
+                    Token = null,
+                    Resultado = false,
+                    Msj = "El usuario está inactivo. Contacte al administrador."
+                };
+            }
 
-            // Obtener todos los roles del usuario
+            // Obtener roles
             var roles = temp.IdRols?
-                .Select(r => r.NombreRol)  // Usar NombreRol según tu modelo
-                .Where(rol => !string.IsNullOrEmpty(rol))
+                .Select(r => r.NombreRol)
+                .Where(rol => !string.IsNullOrWhiteSpace(rol))
                 .ToList() ?? new List<string>();
 
-            // Si no tiene roles, puedes manejarlo como quieras
+            // Bloquear si no tiene roles
             if (!roles.Any())
             {
-                return new AutorizacionResponse()
+                return new AutorizacionResponse
                 {
                     Token = null,
                     Resultado = false,
@@ -162,10 +105,10 @@ namespace ApiBiblioteca.Services
                 };
             }
 
-            // Generar token con los roles
+            // Generar token
             string tokenCreado = GenerarToken(temp.Email, roles);
 
-            return new AutorizacionResponse()
+            return new AutorizacionResponse
             {
                 Token = tokenCreado,
                 Resultado = true,
@@ -176,6 +119,7 @@ namespace ApiBiblioteca.Services
                 Roles = roles
             };
         }
+
 
     }
 }
