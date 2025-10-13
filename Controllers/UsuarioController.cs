@@ -59,6 +59,11 @@ namespace ApiBiblioteca.Controllers
         }
 
 
+
+
+
+
+
         /*
          * Metodo para iniciar sesion
          */
@@ -280,9 +285,48 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
-        
+
+        /*
+         * Metodo para ver el perfil de un usuario
+         */
+
+        [HttpGet("PerfilUsuario")]
+        public async Task<ActionResult<PerfilUsuario>> PerfilUsuario(int idUsuario)
+        {
+            try
+            {
 
 
+                // Buscar usuario en la base de datos
+                var usuario = await _context.Usuarios.FirstOrDefaultAsync(x => x.IdUsuario == idUsuario);
 
+                if (usuario == null)
+                {
+                    return NotFound(new { mensaje = "Usuario no encontrado" });
+                }
+
+                // Mapear a DTO (sin password por seguridad)
+                var perfilDto = new PerfilUsuario
+                {
+                    Email = usuario.Email,
+                    Nombre = usuario.Nombre,
+                    Cedula = usuario.cedula,
+                    Password = null 
+                };
+
+                return Ok(perfilDto);
+            }
+            catch (Exception ex)
+            {
+                // Log del error
+                return StatusCode(500, new { mensaje = "Error interno del servidor", error = ex.Message });
+            }
+        }
     }
+
+
+
+
+
 }
+
