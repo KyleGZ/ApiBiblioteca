@@ -59,6 +59,9 @@ namespace ApiBiblioteca.Controllers
             {
                 return NotFound(new { mensaje = "Usuario o rol no encontrado." });
             }
+            if (usuario.Estado.Equals("Inactivo")) {
+                return BadRequest(new { mensaje = "No se puede asignar el rol a un usuario inactivo" });
+            }
 
             // Verificar si ya existe la relación
             bool yaAsignado = usuario.IdRols.Any(r => r.IdRol == idRol);
@@ -85,6 +88,11 @@ namespace ApiBiblioteca.Controllers
 
             if (usuario == null || rol == null)
                 return NotFound(new { mensaje = "Usuario o rol no encontrado." });
+
+            if (usuario.Estado.Equals("Inactivo")) { 
+                return BadRequest(new { mensaje = "No se puede quitar el rol de un usuario inactivo" });
+
+            }
 
             if (!usuario.IdRols.Any(r => r.IdRol == idRol))
                 return BadRequest(new { mensaje = "El usuario no tiene asignado ese rol." });
