@@ -308,10 +308,11 @@ namespace ApiBiblioteca.Controllers
                 // Mapear a DTO (sin password por seguridad)
                 var perfilDto = new PerfilUsuario
                 {
+                    idUsuario = idUsuario,
                     Email = usuario.Email,
                     Nombre = usuario.Nombre,
                     Cedula = usuario.cedula,
-                    Password = null 
+                    Password = "" 
                 };
 
                 return Ok(perfilDto);
@@ -322,7 +323,82 @@ namespace ApiBiblioteca.Controllers
                 return StatusCode(500, new { mensaje = "Error interno del servidor", error = ex.Message });
             }
         }
+
+        [HttpPut("EditarPerfil")]
+        public async Task<IActionResult> EditarPerfil([FromBody] PerfilUsuario editarPerfil)
+        {
+            try
+            {
+                // Validar que el modelo sea válido
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new { mensaje = "Datos de edición inválidos", errores = ModelState.Values.SelectMany(v => v.Errors) });
+                }
+
+                // Validar que el IdUsuario venga en el DTO
+                if (editarPerfil.idUsuario <= 0)
+                {
+                    return BadRequest(new { mensaje = "El ID de usuario es requerido" });
+                }
+
+                // Buscar el usuario existente
+                var usuarioExistente = await _context.Usuarios
+                    .FirstOrDefaultAsync(u => u.IdUsuario == editarPerfil.idUsuario);
+
+                if (usuarioExistente == null)
+                {
+                    return NotFound(new { mensaje = "Usuario no encontrado" });
+                }
+
+                // Verificar si el nuevo email ya existe en otro usuario
+                if (!string.IsNullOrEmpty(editarPerfil.Email) && editarPerfil.Email != usuarioExistente.Email)
+                {
+                    var emailExistente = await _context.Usuarios
+                        .FirstOrDefaultAsync(u => u.Email == editarPerfil.Email && u.IdUsuario != editarPerfil.idUsuario);
+
+                    if (emailExistente != null)
+                    {
+                        return Conflict(new { mensaje = "El email ya está registrado en otro usuario" });
+                    }
+                }
+
+
+                // Actualizar solo los campos que se enviaron
+                if (!string.IsNullOrEmpty(editarPerfil.Nombre))
+                    usuarioExistente.Nombre = editarPerfil.Nombre;
+
+                if (!string.IsNullOrEmpty(editarPerfil.Cedula))
+                    usuarioExistente.cedula = editarPerfil.Cedula;
+
+                if (!string.IsNullOrEmpty(editarPerfil.Email))
+                    usuarioExistente.Email = editarPerfil.Email;
+
+                if (!string.IsNullOrEmpty(editarPerfil.Password))
+                    usuarioExistente.Password = BCrypt.Net.BCrypt.HashPassword(editarPerfil.Password);
+
+
+
+
+                // Guardar cambios
+                _context.Usuarios.Update(usuarioExistente);
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    mensaje = "Usuario actualizado exitosamente",
+                    idUsuario = usuarioExistente.IdUsuario
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { mensaje = "Error interno del servidor", error = ex.Message });
+            }
+        }
+
     }
+
+
+
 
 
 

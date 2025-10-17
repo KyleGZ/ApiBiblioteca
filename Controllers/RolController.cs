@@ -74,7 +74,7 @@ namespace ApiBiblioteca.Controllers
             usuario.IdRols.Add(rol);
             await _context.SaveChangesAsync();
 
-            return Ok(new { mensaje = $"Rol '{rol.NombreRol}' asignado correctamente al usuario '{usuario.Nombre}'." });
+            return Ok(new { mensaje = $"Rol {rol.NombreRol} asignado correctamente al usuario {usuario.Nombre}." });
         }
 
         [HttpPost("QuitarRolAUsuario")]
@@ -100,7 +100,7 @@ namespace ApiBiblioteca.Controllers
             usuario.IdRols.Remove(rol);
             await _context.SaveChangesAsync();
 
-            return Ok(new { mensaje = $"Rol '{rol.NombreRol}' quitado del usuario '{usuario.Nombre}'." });
+            return Ok(new { mensaje = $"Rol {rol.NombreRol} quitado del usuario {usuario.Nombre}." });
         }
 
     }
