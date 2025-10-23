@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using ApiBiblioteca.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace ApiBiblioteca.Models;
+namespace ApiBiblioteca.Data;
+
 public partial class DbContextBiblioteca : DbContext
 {
     public DbContextBiblioteca(DbContextOptions<DbContextBiblioteca> options)

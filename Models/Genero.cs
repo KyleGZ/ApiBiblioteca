@@ -9,5 +9,5 @@ public partial class Genero
 
     public string Nombre { get; set; } = null!;
 
-    public virtual ICollection<Libro> Libros { get; set; } = new List<Libro>();
+    public virtual ICollection<Libro> IdLibros { get; set; } = new List<Libro>();
 }

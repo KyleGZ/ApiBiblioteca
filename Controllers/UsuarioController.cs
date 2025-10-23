@@ -35,7 +35,7 @@ namespace ApiBiblioteca.Controllers
                     .Select(u => new UsuarioListaDto
                     {
                         IdUsuario = u.IdUsuario,
-                        Cedula = u.cedula,
+                        Cedula = u.Cedula,
                         Nombre = u.Nombre,
                         Email = u.Email,
                         Estado = u.Estado,
@@ -106,7 +106,7 @@ namespace ApiBiblioteca.Controllers
 
                 // Verificar si la cedula ya existe
                 var cedulaExistente = await _context.Usuarios
-                    .FirstOrDefaultAsync(u => u.cedula == registro.cedula);
+                    .FirstOrDefaultAsync(u => u.Cedula == registro.cedula);
 
                 // Verificar si el email ya existe
                 var usuarioExistente = await _context.Usuarios
@@ -131,9 +131,9 @@ namespace ApiBiblioteca.Controllers
                 {
                     Nombre = registro.Nombre,
                     Email = registro.Email,
-                    cedula = registro.cedula,
+                    Cedula = registro.cedula,
                     Password = passwordHash,
-                    FechaRegistro = DateTime.Now.Date,
+                    FechaRegistro = DateTime.Now,
                     Estado = "Activo"
                 };
 
@@ -189,10 +189,10 @@ namespace ApiBiblioteca.Controllers
                 }
 
                 // Verificar si la nueva cédula ya existe en otro usuario
-                if (!string.IsNullOrEmpty(editarDto.cedula) && editarDto.cedula != usuarioExistente.cedula)
+                if (!string.IsNullOrEmpty(editarDto.cedula) && editarDto.cedula != usuarioExistente.Cedula)
                 {
                     var cedulaExistente = await _context.Usuarios
-                        .FirstOrDefaultAsync(u => u.cedula == editarDto.cedula && u.IdUsuario != editarDto.IdUsuario);
+                        .FirstOrDefaultAsync(u => u.Cedula == editarDto.cedula && u.IdUsuario != editarDto.IdUsuario);
 
                     if (cedulaExistente != null)
                     {
@@ -208,7 +208,7 @@ namespace ApiBiblioteca.Controllers
                     usuarioExistente.Email = editarDto.Email;
 
                 if (!string.IsNullOrEmpty(editarDto.cedula))
-                    usuarioExistente.cedula = editarDto.cedula;
+                    usuarioExistente.Cedula = editarDto.cedula;
 
                 if (!string.IsNullOrEmpty(editarDto.Password))
                     usuarioExistente.Password = BCrypt.Net.BCrypt.HashPassword(editarDto.Password);
@@ -311,7 +311,7 @@ namespace ApiBiblioteca.Controllers
                     idUsuario = idUsuario,
                     Email = usuario.Email,
                     Nombre = usuario.Nombre,
-                    Cedula = usuario.cedula,
+                    Cedula = usuario.Cedula,
                     Password = "" 
                 };
 
@@ -368,7 +368,7 @@ namespace ApiBiblioteca.Controllers
                     usuarioExistente.Nombre = editarPerfil.Nombre;
 
                 if (!string.IsNullOrEmpty(editarPerfil.Cedula))
-                    usuarioExistente.cedula = editarPerfil.Cedula;
+                    usuarioExistente.Cedula = editarPerfil.Cedula;
 
                 if (!string.IsNullOrEmpty(editarPerfil.Email))
                     usuarioExistente.Email = editarPerfil.Email;
