@@ -577,7 +577,7 @@ namespace ApiBiblioteca.Controllers
         {
             try
             {
-                // ✅ 1. VALIDACIONES BÁSICAS PRIMERO
+                // Se valida que el modelo este completo
                 if (string.IsNullOrWhiteSpace(libroDto.Titulo))
                     return BadRequest(new ApiResponse { Success = false, Message = "El título es requerido" });
 
@@ -587,45 +587,13 @@ namespace ApiBiblioteca.Controllers
                 if (libroDto.IdAutores == null || !libroDto.IdAutores.Any())
                     return BadRequest(new ApiResponse { Success = false, Message = "Debe asignar al menos un autor" });
 
-                // ✅ 2. VERIFICAR ISBN ÚNICO
+                // Se verifca que no exista un libro con el mismo ISBN
                 var libroExistente = await _context.Libros
                     .FirstOrDefaultAsync(l => l.Isbn == libroDto.Isbn);
 
                 if (libroExistente != null)
                     return BadRequest(new ApiResponse { Success = false, Message = "Ya existe un libro con este ISBN" });
 
-                // ✅ 3. CONSULTAR VALORES POR DEFECTO (TODO JUNTO ANTES DE LAS VALIDACIONES)
-                var editorialPorDefecto = await _context.Editorials
-                    .FirstOrDefaultAsync(e => e.Nombre.Trim().ToLower() == "editorial desconocida".ToLower());
-
-                var seccionPorDefecto = await _context.Seccions
-                    .FirstOrDefaultAsync(e => e.Nombre.Trim().ToLower() == "sección general".ToLower());
-
-                // ✅ 4. VERIFICAR EXISTENCIA DE VALORES POR DEFECTO
-                if (editorialPorDefecto == null)
-                    return BadRequest(new ApiResponse { Success = false, Message = "Error del sistema: No existe la editorial por defecto" });
-
-                if (seccionPorDefecto == null)
-                    return BadRequest(new ApiResponse { Success = false, Message = "Error del sistema: No existe la sección por defecto" });
-
-                //// ✅ 5. VALIDAR IDs PROPORCIONADOS (SI LOS HAY)
-                //if (libroDto.IdEditorial.HasValue)
-                //{
-                //    var editorialExiste = await _context.Editorials
-                //        .AnyAsync(e => e.IdEditorial == libroDto.IdEditorial.Value);
-                //    if (!editorialExiste)
-                //        return BadRequest(new ApiResponse { Success = false, Message = "La editorial seleccionada no existe" });
-                //}
-
-                //if (libroDto.IdSeccion.HasValue)
-                //{
-                //    var seccionExiste = await _context.Seccions
-                //        .AnyAsync(s => s.IdSeccion == libroDto.IdSeccion.Value);
-                //    if (!seccionExiste)
-                //        return BadRequest(new ApiResponse { Success = false, Message = "La sección seleccionada no existe" });
-                //}
-
-                // ✅ 6. VALIDAR AUTORES
                 var autores = await _context.Autors
                     .Where(a => libroDto.IdAutores.Contains(a.IdAutor))
                     .ToListAsync();
@@ -633,7 +601,7 @@ namespace ApiBiblioteca.Controllers
                 if (autores.Count != libroDto.IdAutores.Count)
                     return BadRequest(new ApiResponse { Success = false, Message = "Uno o más autores no existen" });
 
-                // ✅ 7. VALIDAR GÉNEROS (SI SE PROPORCIONAN)
+                // Se valida que la lista de géneros sea válida si se proporciona
                 List<Genero>? generos = null;
                 if (libroDto.IdGeneros != null && libroDto.IdGeneros.Any())
                 {
@@ -645,21 +613,16 @@ namespace ApiBiblioteca.Controllers
                         return BadRequest(new ApiResponse { Success = false, Message = "Uno o más géneros no existen" });
                 }
 
-                if (libroDto.IdEditorial == null)
-                    {
-                    libroDto.IdEditorial = editorialPorDefecto.IdEditorial;
-                }
 
-                
 
-                // ✅ 8. CREAR EL LIBRO (TODAS LAS VALIDACIONES PASARON)
+                // Se crea el nuevo libro
                 var libro = new Libro
                 {
                     Titulo = libroDto.Titulo.Trim(),
                     Isbn = libroDto.Isbn.Trim(),
 
-                    IdEditorial = (int)libroDto.IdEditorial,
-                    IdSeccion = (int)libroDto.IdSeccion,
+                    IdEditorial = libroDto.IdEditorial,
+                    IdSeccion = libroDto.IdSeccion,
                     Estado = libroDto.Estado ?? "disponible",
                     Descripcion = libroDto.Descripcion?.Trim() ?? "",
                     PortadaUrl = libroDto.PortadaUrl?.Trim() ?? "/imagenes/portadas/default-book-cover.jpg",
@@ -667,7 +630,7 @@ namespace ApiBiblioteca.Controllers
                     IdGeneros = generos ?? new List<Genero>()
                 };
 
-                // ✅ 9. GUARDAR EN BD
+                // Se guarda el libro en la base de datos
                 _context.Libros.Add(libro);
                 await _context.SaveChangesAsync();
 
@@ -685,7 +648,7 @@ namespace ApiBiblioteca.Controllers
                 return StatusCode(500, new ApiResponse
                 {
                     Success = false,
-                    Message = $"Error al crear el libro: {ex.InnerException.Message}"
+                    Message = $"Error al crear el libro: {ex.Message}"
                 });
             }
         }

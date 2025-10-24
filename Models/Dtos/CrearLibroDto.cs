@@ -4,8 +4,8 @@
     {
         public string Titulo { get; set; } = null!;
         public string Isbn { get; set; } = null!;
-        public int? IdEditorial { get; set; }
-        public int? IdSeccion { get; set; }
+        public int IdEditorial { get; set; }
+        public int IdSeccion { get; set; }
         public string? Estado { get; set; }  
         public string? Descripcion { get; set; } = null!;
         public string? PortadaUrl { get; set; } = null!;
