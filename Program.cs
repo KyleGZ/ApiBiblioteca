@@ -1,11 +1,17 @@
 using ApiBiblioteca.Models;
 using ApiBiblioteca.Services;
-using Microsoft.EntityFrameworkCore;
+using ApiBiblioteca.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OfficeOpenXml;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -13,6 +19,10 @@ builder.Services.AddControllers();
 // Configurar Entity Framework
 builder.Services.AddDbContext<DbContextBiblioteca>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("StringConnection")));
+
+builder.Services.Configure<ImportDefaults>(
+    builder.Configuration.GetSection("ImportDefaults"));
+
 
 // Configurar JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -33,6 +43,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 // Registrar el servicio de autorización
 builder.Services.AddScoped<IAutorizacionService, AutorizacionService>();
+builder.Services.AddScoped<ILibroImportService, LibroImportService>();
+
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

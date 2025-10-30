@@ -14,11 +14,13 @@ namespace ApiBiblioteca.Controllers
     {
         private readonly DbContextBiblioteca _context;
         private readonly IAutorizacionService _autorizacionService;
+        private readonly ILibroImportService _libroImportService;
 
-        public LibroController(DbContextBiblioteca dbContext, IAutorizacionService autorizacionService)
+        public LibroController(DbContextBiblioteca dbContext, IAutorizacionService autorizacionService, ILibroImportService libroImportService)
         {
             _autorizacionService = autorizacionService;
             _context = dbContext;
+            _libroImportService = libroImportService;
         }
 
 
@@ -702,6 +704,62 @@ namespace ApiBiblioteca.Controllers
                 return StatusCode(500, new { error = "Error interno del servidor" });
             }
 
+        }
+
+
+        /*
+         * Metodo para obtener la plantilla de importacion de libros
+         */
+        [HttpGet("Plantilla-Importacion")]
+        public async Task<IActionResult> DescargarPlantilla()
+        {
+            var contenido = await _libroImportService.GenerarPlantillaExcelAsync();
+
+            return File(
+                contenido,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "Plantilla_Importacion_Libros.xlsx"
+            );
+        }
+
+        /*
+         * Metodo para importar libros desde un archivo Excel
+         */
+        [HttpPost("Importar-Libro")]
+        public async Task<IActionResult> ImportarLibros(IFormFile archivo)
+        {
+            if (archivo == null || archivo.Length == 0)
+                return BadRequest("Debe adjuntar un archivo Excel válido.");
+
+            try
+            {
+                var resultado = await _libroImportService.ImportarLibrosDesdeExcelAsync(archivo);
+
+                if (resultado.Success)
+                {
+                    return Ok(new
+                    {
+                        mensaje = resultado.Message,
+                        datos = resultado.Data
+                    });
+                }
+                else
+                {
+                    return BadRequest(new
+                    {
+                        mensaje = resultado.Message,
+                        datos = resultado.Data
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Ocurrió un error durante la importación.",
+                    error = ex.Message
+                });
+            }
         }
 
     }
