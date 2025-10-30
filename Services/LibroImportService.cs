@@ -166,12 +166,54 @@ namespace ApiBiblioteca.Services
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return new ApiResponse
+                /*
+                 * Nuevos cambios
+                 */
+
+                bool importacionExitosa = insertados > 0 && errores == 0;
+                bool importacionParcial = insertados > 0 && errores > 0;
+                bool importacionFallida = insertados == 0 && errores > 0;
+                bool archivoVacio = total == 0;
+
+                if (archivoVacio)
                 {
-                    Success = true,
-                    Message = $"Importación completada. Total: {total}, Insertados: {insertados}, Errores: {errores}.",
-                    Data = new { total, insertados, errores, detallesErrores }
-                };
+                    return new ApiResponse
+                    {
+                        Success = false,
+                        Message = "El archivo Excel está vacío. No se importaron libros.",
+                        Data = new { total, insertados, errores, detallesErrores }
+                    };
+
+                }else if (importacionExitosa)
+                {
+                    return new ApiResponse
+                    {
+                        Success = true,
+                        Message = $"Importación exitosa. Total: {total}, Insertados: {insertados}.",
+                        Data = new { total, insertados, errores, detallesErrores }
+                    };
+
+                }else if (importacionParcial)
+                {
+
+                    return new ApiResponse
+                    {
+                        Success = false,
+                        Message = $"Importación parcial. Total: {total}, Insertados: {insertados}, Errores: {errores}.",
+                        Data = new { total, insertados, errores, detallesErrores }
+                    };
+                }
+                else // importacionFallida
+                {
+                    return new ApiResponse
+                    {
+                        Success = false,
+                        Message = $"Importación fallida. No se insertaron libros. Total: {total}, Errores: {errores}.",
+                        Data = new { total, insertados, errores, detallesErrores }
+                    };
+
+                }
+                    
             }
             catch (Exception ex)
             {
