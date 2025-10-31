@@ -59,7 +59,132 @@ namespace ApiBiblioteca.Controllers
         }
 
 
+        [HttpGet("ListarViewUsuario")]
+        public async Task<ActionResult<PaginacionResponse<UsuarioListaDto>>> ListarViewUsuario(int pagina = 1, int resultadoPorPagina = 20)
+        {
+            var response = new PaginacionResponse<UsuarioListaDto>();
+            try
+            {
+                if (pagina < 1 || resultadoPorPagina < 1)
+                {
+                    return BadRequest(new PaginacionResponse<UsuarioListaDto>
+                    {
+                        Success = false,
+                        Message = "La página y resultados por página deben ser mayores a 0"
+                    });
+                }
 
+                // Variable de consulta para obtener todos los usuarios
+                IQueryable<Usuario> query = _context.Usuarios
+                    .Include(u => u.IdRols);
+
+                // Obtener el total de resultados
+                var totalResultados = await query.CountAsync();
+
+                // Aplicar paginación y mapeo a DTO
+                var usuarios = await query
+                    .Select(u => new UsuarioListaDto
+                    {
+                        IdUsuario = u.IdUsuario,
+                        Cedula = u.Cedula,
+                        Nombre = u.Nombre,
+                        Email = u.Email,
+                        Estado = u.Estado,
+                        Roles = u.IdRols.Select(ur => ur.NombreRol).ToList()
+                    })
+                    .Skip((pagina - 1) * resultadoPorPagina)
+                    .Take(resultadoPorPagina)
+                    .ToListAsync();
+
+                response.Success = true;
+                response.Data = usuarios;
+                response.Pagination = new PaginationInfo
+                {
+                    PaginaActual = pagina,
+                    ResultadosPorPagina = resultadoPorPagina,
+                    TotalResultados = totalResultados,
+                    TotalPaginas = (int)Math.Ceiling(totalResultados / (double)resultadoPorPagina)
+                };
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Error interno del servidor: " + ex.Message;
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+
+        [HttpGet("Busqueda-Usuario")]
+        public async Task<ActionResult<PaginacionResponse<UsuarioListaDto>>> BusquedaUsuario(string termino, int pagina = 1, int resultadoPorPagina = 20)
+        {
+            var response = new PaginacionResponse<UsuarioListaDto>();
+            try
+            {
+                if (string.IsNullOrEmpty(termino))
+                {
+                    return BadRequest(new PaginacionResponse<UsuarioListaDto>
+                    {
+                        Success = false,
+                        Message = "El término de búsqueda no puede estar vacío"
+                    });
+                }
+
+                if (pagina < 1 || resultadoPorPagina < 1)
+                {
+                    return BadRequest(new PaginacionResponse<UsuarioListaDto>
+                    {
+                        Success = false,
+                        Message = "La página y resultados por página deben ser mayores a 0"
+                    });
+                }
+
+                termino = termino.Trim();
+
+                // Variable de búsqueda que busca por nombre O cédula
+                IQueryable<Usuario> query = _context.Usuarios
+                    .Include(u => u.IdRols)
+                    .Where(u => u.Nombre.Contains(termino) || u.Cedula.Contains(termino));
+
+                // Obtener el total de resultados que coinciden con la búsqueda
+                var totalResultados = await query.CountAsync();
+
+                // Aplicar paginación y mapeo a DTO
+                var usuarios = await query
+                    .Select(u => new UsuarioListaDto
+                    {
+                        IdUsuario = u.IdUsuario,
+                        Cedula = u.Cedula,
+                        Nombre = u.Nombre,
+                        Email = u.Email,
+                        Estado = u.Estado,
+                        Roles = u.IdRols.Select(ur => ur.NombreRol).ToList()
+                    })
+                    .Skip((pagina - 1) * resultadoPorPagina) // Corrección: Skip en lugar de Skyp
+                    .Take(resultadoPorPagina)
+                    .ToListAsync();
+
+                response.Success = true;
+                response.Data = usuarios;
+                response.Pagination = new PaginationInfo
+                {
+                    PaginaActual = pagina,
+                    ResultadosPorPagina = resultadoPorPagina,
+                    TotalResultados = totalResultados,
+                    TotalPaginas = (int)Math.Ceiling(totalResultados / (double)resultadoPorPagina)
+                };
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Error interno del servidor: " + ex.Message;
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
 
 
 
