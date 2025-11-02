@@ -50,37 +50,163 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
-        // GET /Autor/Listar
-        [HttpGet("Listar")]
-        public async Task<IActionResult> ListarAutores()
+        // GET /Autor/Busqueda-Autor
+        [HttpGet("Busqueda-Autor")]
+        public async Task<ActionResult<PaginacionResponse<AutorDto>>> BusquedaAutor(string termino, int pagina = 1, int resultadoPorPagina = 20)
         {
+            var response = new PaginacionResponse<AutorDto>();
+
             try
             {
-                var autores = await _context.Autors
+                if (string.IsNullOrWhiteSpace(termino))
+                {
+                    return BadRequest(new PaginacionResponse<AutorDto>
+                    {
+                        Success = false,
+                        Message = "El término de búsqueda no puede estar vacío"
+                    });
+                }
+
+                if (pagina < 1 || resultadoPorPagina < 1)
+                {
+                    return BadRequest(new PaginacionResponse<AutorDto>
+                    {
+                        Success = false,
+                        Message = "La página y resultados por página deben ser mayores a 0"
+                    });
+                }
+
+                termino = termino.Trim();
+
+                // Consulta base: busca por Nombre (paridad con BusquedaUsuario -> Contains)
+                IQueryable<Autor> query = _context.Autors
+                    .Where(a => a.Nombre.Contains(termino));
+
+                // Total de coincidencias
+                var totalResultados = await query.CountAsync();
+
+                // Paginación + mapeo a DTO
+                var autores = await query
+                    .OrderBy(a => a.IdAutor)
                     .Select(a => new AutorDto
                     {
                         IdAutor = a.IdAutor,
                         Nombre = a.Nombre
                     })
-                    .OrderBy(a => a.IdAutor)
+                    .Skip((pagina - 1) * resultadoPorPagina) // ✅ Skip correcto
+                    .Take(resultadoPorPagina)
                     .ToListAsync();
 
-                return Ok(new
+                response.Success = true;
+                response.Data = autores;
+                response.Pagination = new PaginationInfo
                 {
-                    mensaje = "Lista de autores obtenida exitosamente",
-                    totalAutores = autores.Count,
-                    autores = autores
-                });
+                    PaginaActual = pagina,
+                    ResultadosPorPagina = resultadoPorPagina,
+                    TotalResultados = totalResultados,
+                    TotalPaginas = (int)Math.Ceiling(totalResultados / (double)resultadoPorPagina)
+                };
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
-                {
-                    mensaje = "Error interno del servidor",
-                    error = ex.Message
-                });
+                response.Success = false;
+                response.Message = "Error interno del servidor: " + ex.Message;
+                return StatusCode(500, response);
             }
+
+            return Ok(response);
         }
+
+
+        // GET /Autor/Listar
+        //[HttpGet("Listar")]
+        //public async Task<IActionResult> ListarAutores()
+        //{
+        //    try
+        //    {
+        //        var autores = await _context.Autors
+        //            .Select(a => new AutorDto
+        //            {
+        //                IdAutor = a.IdAutor,
+        //                Nombre = a.Nombre
+        //            })
+        //            .OrderBy(a => a.IdAutor)
+        //            .ToListAsync();
+
+        //        return Ok(new
+        //        {
+        //            mensaje = "Lista de autores obtenida exitosamente",
+        //            totalAutores = autores.Count,
+        //            autores = autores
+        //        });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new
+        //        {
+        //            mensaje = "Error interno del servidor",
+        //            error = ex.Message
+        //        });
+        //    }
+        //}
+
+        // GET /Autor/ListarViewAutor
+        [HttpGet("ListarViewAutor")]
+        public async Task<ActionResult<PaginacionResponse<AutorDto>>> ListarViewAutor(int pagina = 1, int resultadoPorPagina = 20)
+        {
+            var response = new PaginacionResponse<AutorDto>();
+
+            try
+            {
+                if (pagina < 1 || resultadoPorPagina < 1)
+                {
+                    return BadRequest(new PaginacionResponse<AutorDto>
+                    {
+                        Success = false,
+                        Message = "La página y resultados por página deben ser mayores a 0"
+                    });
+                }
+
+                // Consulta base
+                IQueryable<Autor> query = _context.Autors;
+
+                // Total de registros
+                var totalResultados = await query.CountAsync();
+
+                // Paginación y mapeo a DTO
+                var autores = await query
+                    .OrderBy(a => a.IdAutor)
+                    .Select(a => new AutorDto
+                    {
+                        IdAutor = a.IdAutor,
+                        Nombre = a.Nombre
+                    })
+                    .Skip((pagina - 1) * resultadoPorPagina)
+                    .Take(resultadoPorPagina)
+                    .ToListAsync();
+
+                // Construir respuesta
+                response.Success = true;
+                response.Data = autores;
+                response.Pagination = new PaginationInfo
+                {
+                    PaginaActual = pagina,
+                    ResultadosPorPagina = resultadoPorPagina,
+                    TotalResultados = totalResultados,
+                    TotalPaginas = (int)Math.Ceiling(totalResultados / (double)resultadoPorPagina)
+                };
+                response.Message = "Lista de autores obtenida exitosamente";
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Error interno del servidor: " + ex.Message;
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
 
         //Autor/Registro
         [HttpPost("Registro")]
