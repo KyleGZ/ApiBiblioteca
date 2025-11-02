@@ -58,6 +58,10 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
+        /*
+          * 
+          *     // Metodo para listar los usuarios con paginacion
+          */
 
         [HttpGet("ListarViewUsuario")]
         public async Task<ActionResult<PaginacionResponse<UsuarioListaDto>>> ListarViewUsuario(int pagina = 1, int resultadoPorPagina = 20)
