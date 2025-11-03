@@ -1,4 +1,5 @@
 using ApiBiblioteca.Models;
+using ApiBiblioteca.Models.Dtos;
 using ApiBiblioteca.Services;
 using ApiBiblioteca.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -44,6 +45,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Registrar el servicio de autorización
 builder.Services.AddScoped<IAutorizacionService, AutorizacionService>();
 builder.Services.AddScoped<ILibroImportService, LibroImportService>();
+
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
+
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IPasswordResetService, PasswordService>();
 
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

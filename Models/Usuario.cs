@@ -32,4 +32,7 @@ public partial class Usuario
     public virtual ICollection<Sancion> Sancions { get; set; } = new List<Sancion>();
 
     public virtual ICollection<Rol> IdRols { get; set; } = new List<Rol>();
+
+    public virtual ICollection<PasswordResetToken> PasswordResetTokens { get; set; } = new List<PasswordResetToken>();
+
 }

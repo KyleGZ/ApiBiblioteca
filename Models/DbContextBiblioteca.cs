@@ -40,6 +40,8 @@ public partial class DbContextBiblioteca : DbContext
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
 
+    public virtual DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.UseCollation("SQL_Latin1_General_CP1_CI_AS");
@@ -466,6 +468,44 @@ public partial class DbContextBiblioteca : DbContext
                         j.IndexerProperty<int>("IdRol").HasColumnName("id_rol");
                     });
         });
+
+        modelBuilder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.HasKey(e => e.IdForgotPassword).HasName("PK_PasswordResetTokens");
+
+            entity.ToTable("PasswordResetTokens");
+
+            entity.Property(e => e.IdForgotPassword)
+                .HasColumnName("id_forgot_password")
+                .ValueGeneratedOnAdd();
+
+            entity.Property(e => e.IdUsuario)
+                .HasColumnName("id_usuario");
+
+            entity.Property(e => e.Token)
+                .HasColumnName("token")
+                .HasMaxLength(512)
+                .IsUnicode(false);
+
+            entity.Property(e => e.Expires)
+                .HasColumnName("expires");
+
+            entity.Property(e => e.Used)
+                .HasColumnName("used");
+
+            entity.Property(e => e.CreatedAt)
+                .HasColumnName("created_at")
+                .HasDefaultValueSql("SYSUTCDATETIME()")
+                .ValueGeneratedOnAdd();
+
+            // 🔥 Clave: relación explícita con el FK correcto
+            entity.HasOne(d => d.Usuario)
+                .WithMany(p => p.PasswordResetTokens)
+                .HasForeignKey(d => d.IdUsuario)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_PasswordResetTokens_Usuarios");
+        });
+
 
         OnModelCreatingPartial(modelBuilder);
     }

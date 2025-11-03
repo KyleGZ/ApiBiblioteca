@@ -12,11 +12,16 @@ namespace ApiBiblioteca.Controllers
     {
         private readonly DbContextBiblioteca _context;
         private readonly IAutorizacionService _autorizacionService;
-
-        public UsuarioController(DbContextBiblioteca context, IAutorizacionService autorizacionService)
+        private readonly IEmailService _emailService;
+        private readonly IPasswordResetService _passwordResetService;
+        private readonly ILogger<UsuarioController> _logger;
+        public UsuarioController(DbContextBiblioteca context, IAutorizacionService autorizacionService, IEmailService emailService, IPasswordResetService passwordResetService, ILogger<UsuarioController> logger)
         {
             _context = context;
             _autorizacionService = autorizacionService;
+            _emailService = emailService;
+            _passwordResetService = passwordResetService;
+            _logger = logger;
         }
 
         [HttpGet("ListaUsuarios")]
@@ -271,6 +276,12 @@ namespace ApiBiblioteca.Controllers
                 _context.Usuarios.Add(nuevoUsuario);
                 await _context.SaveChangesAsync();
 
+
+                var emailBody = $"<p>Hola {nuevoUsuario.Nombre},</p>" +
+                                "<p>Gracias por registrarte. Por favor, haz clic en el siguiente enlace para confirmar tu correo electrónico:</p>";
+                
+                await _emailService.SendAsync(nuevoUsuario.Email, "Confirmación de Registro", emailBody);
+
                 return Ok(new { mensaje = "Usuario registrado exitosamente", idUsuario = nuevoUsuario.IdUsuario });
             }
             catch (Exception ex)
@@ -521,6 +532,81 @@ namespace ApiBiblioteca.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { mensaje = "Error interno del servidor", error = ex.Message });
+            }
+        }
+
+        [HttpPost("ForgotPassword")]
+        public async Task<ActionResult<ApiResponse>> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Datos de entrada inválidos."
+                });
+            }
+
+            try
+            {
+                var result = await _passwordResetService.GenerateAndSendResetTokenAsync(request.Email);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error en ApiForgotPassword para: {request.Email}");
+                return StatusCode(500, new ApiResponse
+                {
+                    Success = false,
+                    Message = "Error interno del servidor."
+                });
+            }
+        }
+
+        [HttpPost("ResetPassword")]
+        public async Task<ActionResult<ApiResponse>> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Datos de entrada inválidos."
+                });
+            }
+
+            try
+            {
+                var result = await _passwordResetService.ResetPasswordAsync(request.Token, request.NewPassword);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error en ApiResetPassword para token: {request.Token}");
+                return StatusCode(500, new ApiResponse
+                {
+                    Success = false,
+                    Message = "Error interno del servidor."
+                });
+            }
+        }
+
+        [HttpGet("ValidateResetToken")]
+        public async Task<ActionResult<ApiResponse>> ValidateResetToken(string token)
+        {
+            try
+            {
+                var result = await _passwordResetService.ValidateResetTokenAsync(token);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error en ApiValidateResetToken para token: {token}");
+                return Ok(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Error validando el token."
+                });
             }
         }
 
