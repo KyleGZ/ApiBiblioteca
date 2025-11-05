@@ -1,20 +1,48 @@
 ﻿using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
-using MimeKit.Utils;
-using Microsoft.Extensions.Options;
-using ApiBiblioteca.Models.Dtos;
+using ApiBiblioteca.Settings;
+using Microsoft.AspNetCore.DataProtection;
+
 namespace ApiBiblioteca.Services
 {
     public class EmailService : IEmailService
     {
-        private readonly EmailSettings _emailSettings;
         private readonly ILogger<EmailService> _logger;
+        private readonly IDataProtector _protector;
+        private readonly string _filePath;
+        private EmailSettings _emailSettings;
 
-        public EmailService(IOptions<EmailSettings> options, ILogger<EmailService> logger)
+        public EmailService(ILogger<EmailService> logger, IDataProtectionProvider dataProtectionProvider, IWebHostEnvironment env)
         {
-            _emailSettings = options.Value;
             _logger = logger;
+            _protector = dataProtectionProvider.CreateProtector("EmailSettingsProtector");
+
+            // ✅ 1. Usa IWebHostEnvironment para que funcione tanto en desarrollo como en producción
+            _filePath = Path.Combine(env.ContentRootPath, "App_Data", "emailsettings.json");
+
+            // Cargar configuración inicial
+            _emailSettings = LoadSettingsAsync().GetAwaiter().GetResult();
+        }
+
+        private async Task<EmailSettings> LoadSettingsAsync()
+        {
+            if (!File.Exists(_filePath))
+            {
+                _logger.LogWarning("Archivo de configuración de correo no encontrado en {Path}. Se usará configuración vacía.", _filePath);
+                return new EmailSettings();
+            }
+
+            var json = await File.ReadAllTextAsync(_filePath);
+            var settings = System.Text.Json.JsonSerializer.Deserialize<EmailSettings>(json) ?? new EmailSettings();
+
+            if (!string.IsNullOrWhiteSpace(settings.Password))
+            {
+                try { settings.Password = _protector.Unprotect(settings.Password); }
+                catch { settings.Password = string.Empty; }
+            }
+
+            return settings;
         }
 
         /*
@@ -22,6 +50,7 @@ namespace ApiBiblioteca.Services
          */
         public async Task SendAsync(string toEmail, string subject, string htmlBody, CancellationToken cancellationToken = default)
         {
+            ValidateSettings();
             var message = CreateMessage(toEmail, subject, htmlBody);
             await SendMessageAsync(message, cancellationToken);
         }
@@ -29,57 +58,53 @@ namespace ApiBiblioteca.Services
         /*
          * Envía un correo electrónico con un archivo adjunto.
          */
-        public async Task SendWithAttachmentAsync(string toEmail, string subject, string htmlBody, byte[] attachmentBytes, string attachmentFilename, string mimeType = "application/pdf", CancellationToken cancellationToken = default)
+        public async Task SendWithAttachmentAsync(string toEmail, string subject, string htmlBody,
+            byte[] attachmentBytes, string attachmentFilename, string mimeType = "application/pdf",
+            CancellationToken cancellationToken = default)
         {
+            ValidateSettings();
+
             var message = CreateMessage(toEmail, subject, htmlBody);
-
-            var builder = new BodyBuilder();
-            builder.HtmlBody = htmlBody;
+            var builder = new BodyBuilder { HtmlBody = htmlBody };
             builder.Attachments.Add(attachmentFilename, attachmentBytes, ContentType.Parse(mimeType));
-
             message.Body = builder.ToMessageBody();
 
             await SendMessageAsync(message, cancellationToken);
         }
 
-        // Crea el mensaje de correo electrónico.
         private MimeMessage CreateMessage(string toEmail, string subject, string htmlBody)
         {
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(_emailSettings.FromName, _emailSettings.FromEmail));
             message.To.Add(MailboxAddress.Parse(toEmail));
             message.Subject = subject;
-
-            var bodyBuilder = new BodyBuilder { HtmlBody = htmlBody };
-            message.Body = bodyBuilder.ToMessageBody();
-
+            message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
             return message;
         }
 
-        // Envía el mensaje de correo electrónico utilizando SMTP.
         private async Task SendMessageAsync(MimeMessage message, CancellationToken cancellationToken)
         {
             using var client = new SmtpClient();
 
             try
             {
-                // Connect
-                var secureSocketOptions = _emailSettings.UseStartTls ? SecureSocketOptions.StartTls : SecureSocketOptions.SslOnConnect;
+                _logger.LogInformation("Conectando a servidor SMTP {Host}:{Port}", _emailSettings.SmtpHost, _emailSettings.SmtpPort);
+
+                var secureSocketOptions = _emailSettings.UseStartTls ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto;
                 await client.ConnectAsync(_emailSettings.SmtpHost, _emailSettings.SmtpPort, secureSocketOptions, cancellationToken);
 
-                // Authenticate only if username provided
                 if (!string.IsNullOrWhiteSpace(_emailSettings.Username))
                 {
                     await client.AuthenticateAsync(_emailSettings.Username, _emailSettings.Password, cancellationToken);
-                }   
+                }
 
-                // Send
                 await client.SendAsync(message, cancellationToken);
+                _logger.LogInformation("Correo enviado exitosamente a {To}.", message.To);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error enviando correo a {To}. Subject: {Subject}", message.To, message.Subject);
-                throw; // opcional: envuelve en custom exception si quieres manejarlo distinto
+                _logger.LogError(ex, "Error enviando correo a {To}. Asunto: {Subject}", message.To, message.Subject);
+                throw;
             }
             finally
             {
@@ -87,11 +112,86 @@ namespace ApiBiblioteca.Services
             }
         }
 
+        public async Task<EmailSettings> GetSettingsAsync()
+        {
+            return await LoadSettingsAsync();
+        }
+
+        public async Task UpdateSettingsAsync(EmailSettings newSettings)
+        {
+            if (string.IsNullOrWhiteSpace(newSettings.SmtpHost))
+                throw new ArgumentException("El servidor SMTP no puede estar vacío.");
+            if (string.IsNullOrWhiteSpace(newSettings.FromEmail))
+                throw new ArgumentException("El correo de origen no puede estar vacío.");
+
+            // ✅ 2. Asegurar carpeta App_Data
+            Directory.CreateDirectory(Path.GetDirectoryName(_filePath)!);
+
+            // Crear respaldo
+            if (File.Exists(_filePath))
+            {
+                var backupPath = _filePath.Replace(".json", $"_backup_{DateTime.Now:yyyyMMddHHmmss}.json");
+                File.Copy(_filePath, backupPath, true);
+            }
+
+            // Encriptar contraseña antes de guardar
+            if (!string.IsNullOrWhiteSpace(newSettings.Password))
+            {
+                newSettings.Password = _protector.Protect(newSettings.Password);
+            }
+
+            // Guardar archivo
+            var json = System.Text.Json.JsonSerializer.Serialize(newSettings, new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+            await File.WriteAllTextAsync(_filePath, json);
+            _logger.LogInformation("Configuración de correo actualizada correctamente en {Path}.", _filePath);
+
+            // ✅ 3. Recargar configuración en memoria
+            _emailSettings = await LoadSettingsAsync();
+        }
+
+        public async Task<bool> TestConnectionAsync()
+        {
+            try
+            {
+                using var client = new SmtpClient();
+                var secureSocketOptions = _emailSettings.UseStartTls ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto;
+
+                await client.ConnectAsync(_emailSettings.SmtpHost, _emailSettings.SmtpPort, secureSocketOptions);
+
+                if (!string.IsNullOrWhiteSpace(_emailSettings.Username))
+                    await client.AuthenticateAsync(_emailSettings.Username, _emailSettings.Password);
+
+                await client.DisconnectAsync(true);
+                _logger.LogInformation("Conexión SMTP exitosa.");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error probando conexión SMTP.");
+                return false;
+            }
+        }
+
+        private void ValidateSettings()
+        {
+            if (string.IsNullOrWhiteSpace(_emailSettings.SmtpHost) ||
+                string.IsNullOrWhiteSpace(_emailSettings.FromEmail))
+            {
+                throw new InvalidOperationException("Configuración de correo no válida. Verifique emailsettings.json.");
+            }
+        }
     }
+
     public interface IEmailService
     {
         Task SendAsync(string toEmail, string subject, string htmlBody, CancellationToken cancellationToken = default);
         Task SendWithAttachmentAsync(string toEmail, string subject, string htmlBody, byte[] attachmentBytes, string attachmentFilename, string mimeType = "application/pdf", CancellationToken cancellationToken = default);
+        Task<EmailSettings> GetSettingsAsync();
+        Task UpdateSettingsAsync(EmailSettings newSettings);
+        Task<bool> TestConnectionAsync();
     }
-
 }

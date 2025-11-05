@@ -1,5 +1,4 @@
 using ApiBiblioteca.Models;
-using ApiBiblioteca.Models.Dtos;
 using ApiBiblioteca.Services;
 using ApiBiblioteca.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -45,6 +44,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Registrar el servicio de autorización
 builder.Services.AddScoped<IAutorizacionService, AutorizacionService>();
 builder.Services.AddScoped<ILibroImportService, LibroImportService>();
+
+builder.Configuration.AddJsonFile("emailsettings.json", optional: true, reloadOnChange: true);
 
 builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));

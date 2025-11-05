@@ -1,4 +1,4 @@
-﻿namespace ApiBiblioteca.Models.Dtos
+﻿namespace ApiBiblioteca.Settings
 {
     public class EmailSettings
     {
