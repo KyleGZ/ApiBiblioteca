@@ -60,19 +60,27 @@ namespace ApiBiblioteca.Controllers
         {
             try
             {
-                var success = await _emailService.TestConnectionAsync();
-                if (success)
-                    return Ok(new { message = "Conexión SMTP exitosa." });
+                var result = await _emailService.TestConnectionAsync();
 
-                return StatusCode(500, new { message = "No se pudo conectar al servidor SMTP." });
+                if (result.Success)
+                {
+                    return Ok(result);
+                }
+                else
+                {
+                    return BadRequest(result);
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error probando conexión SMTP.");
-                return StatusCode(500, "Error probando la conexión SMTP.");
+                _logger.LogError(ex, "Error inesperado probando conexión SMTP.");
+                return StatusCode(500, new ApiResponse
+                {
+                    Success = false,
+                    Message = "Error inesperado probando la conexión SMTP."
+                });
             }
         }
-
 
     }
 }

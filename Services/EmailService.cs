@@ -4,6 +4,7 @@ using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.AspNetCore.DataProtection;
 using MimeKit;
+using System.Net.Sockets;
 
 namespace ApiBiblioteca.Services
 {
@@ -238,8 +239,7 @@ namespace ApiBiblioteca.Services
 
 
 
-
-        public async Task<bool> TestConnectionAsync()
+        public async Task<ApiResponse> TestConnectionAsync()
         {
             try
             {
@@ -253,12 +253,55 @@ namespace ApiBiblioteca.Services
 
                 await client.DisconnectAsync(true);
                 _logger.LogInformation("Conexión SMTP exitosa.");
-                return true;
+
+                return new ApiResponse
+                {
+                    Success = true,
+                    Message = "Conexión SMTP exitosa.",
+                    Data = new
+                    {
+                        host = _emailSettings.SmtpHost,
+                        port = _emailSettings.SmtpPort,
+                        useStartTls = _emailSettings.UseStartTls
+                    }
+                };
+            }
+            catch (AuthenticationException authEx)
+            {
+                _logger.LogError(authEx, "Error de autenticación SMTP.");
+                return new ApiResponse
+                {
+                    Success = false,
+                    Message = "Error de autenticación. Verifique usuario y contraseña."
+                    
+                };
+            }
+            catch (SmtpCommandException smtpEx)
+            {
+                _logger.LogError(smtpEx, "Error de comando SMTP.");
+                return new ApiResponse
+                {
+                    Success = false,
+                    Message = $"Error del servidor SMTP: {smtpEx.Message}"
+                };
+            }
+            catch (SocketException sockEx)
+            {
+                _logger.LogError(sockEx, "Error de conexión de red SMTP.");
+                return new ApiResponse
+                {
+                    Success = false,
+                    Message = "No se pudo conectar al servidor SMTP. Verifique el host y puerto."
+                };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error probando conexión SMTP.");
-                return false;
+                return new ApiResponse
+                {
+                    Success = false,
+                    Message = $"Error probando conexión SMTP: {ex.Message}"
+                };
             }
         }
 
@@ -278,6 +321,6 @@ namespace ApiBiblioteca.Services
         Task SendWithAttachmentAsync(string toEmail, string subject, string htmlBody, byte[] attachmentBytes, string attachmentFilename, string mimeType = "application/pdf", CancellationToken cancellationToken = default);
         Task<EmailSettings> GetSettingsAsync();
         Task <ApiResponse>UpdateSettingsAsync(UpdateEmailSettings newSettings);
-        Task<bool> TestConnectionAsync();
+        Task<ApiResponse> TestConnectionAsync();
     }
 }
