@@ -1,4 +1,5 @@
-﻿using ApiBiblioteca.Services;
+﻿using ApiBiblioteca.Models.Dtos;
+using ApiBiblioteca.Services;
 using ApiBiblioteca.Settings;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -31,25 +32,27 @@ namespace ApiBiblioteca.Controllers
 
         /// <summary>
         /// Actualiza la configuración de correo electrónico.
-
-        [HttpPut("UpdateSttings")]
-        public async Task<IActionResult> UpdateSttings([FromBody] EmailSettings settings)
+        [HttpPut("UpdateSettings")]
+        public async Task<IActionResult> UpdateSettings([FromBody] UpdateEmailSettings settings)
         {
             if (settings == null)
-                return BadRequest("Datos inválidos.");
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Datos inválidos."
+                });
 
-            try
+            var result = await _emailService.UpdateSettingsAsync(settings);
+
+            if (result.Success)
             {
-                await _emailService.UpdateSettingsAsync(settings);
-                return Ok(new { message = "Configuración de correo actualizada correctamente." });
+                return Ok(result);
             }
-            catch (Exception ex)
+            else
             {
-                _logger.LogError(ex, "Error actualizando configuración de correo.");
-                return StatusCode(500, "Error al actualizar la configuración de correo.");
+                return BadRequest(result);
             }
         }
-
         /// <summary>
         /// Prueba la conexión SMTP usando la configuración actual.
         [HttpGet("TestConnection")]

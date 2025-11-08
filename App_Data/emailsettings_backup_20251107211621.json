@@ -1,9 +1,9 @@
 {
-  "FromName": "Greivin",
+  "FromName": "Prueba Greivin",
   "FromEmail": "greivind01@gmail.com",
-  "SmtpHost": "smtp.gmail.com",
-  "SmtpPort": 587,
+  "SmtpHost": "",
+  "SmtpPort": 0,
   "UseStartTls": true,
-  "Username": "greivind01@gmail.com",
+  "Username": "beachsaresort@gmail.com",
   "Password": "CfDJ8NALhnTgBA1It7bqweyz-UZ7ib2ETyEX5WYx8LgK1wndzU9s5StL8Ssl7wWXeSfn07yx1RrH5Er6OvRNfIgZcNth-41IJW1PBQOoQmgjJos-fYGpVWL3DepUB6ubE6rHZnX8cRs-c8UulQd5xOSRt4E"
 }
