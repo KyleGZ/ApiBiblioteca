@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OfficeOpenXml;
+using Quartz;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,20 @@ builder.Services.AddControllers();
 // Configurar Entity Framework
 builder.Services.AddDbContext<DbContextBiblioteca>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("StringConnection")));
+//Configurar Quartz
+builder.Services.AddQuartz(q =>
+{
+    var jobKey = new JobKey("RecordarPrestamosProntosVencerJob");
+    q.AddJob<RecordarPrestamosServices>(opts => opts.WithIdentity(jobKey));
+    q.AddTrigger(t => t
+        .ForJob(jobKey)
+        .WithIdentity("RecordarPrestamosProntosVencerJob-trigger")
+        .WithCronSchedule("0 0 8 * * ?")); // Ejecutar cada dia 08:00 AM
+});
+
+builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+
+// Configurar ImportDefaults
 
 builder.Services.Configure<ImportDefaults>(
     builder.Configuration.GetSection("ImportDefaults"));
@@ -52,6 +67,7 @@ builder.Services.Configure<EmailSettings>(
 
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IPasswordResetService, PasswordService>();
+builder.Services.AddScoped<INotificacionesServices, NotificacionesServices>();
 
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

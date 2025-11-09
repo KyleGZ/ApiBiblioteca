@@ -13,7 +13,7 @@ public partial class Prestamo
 
     public DateTime FechaPrestamo { get; set; }
 
-    public DateOnly FechaDevolucionPrevista { get; set; }
+    public DateTime FechaDevolucionPrevista { get; set; }
 
     public DateTime? FechaDevolucionReal { get; set; }
 
