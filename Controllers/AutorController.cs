@@ -152,7 +152,7 @@ namespace ApiBiblioteca.Controllers
 
         // GET /Autor/ListarViewAutor
         [HttpGet("ListarViewAutor")]
-        public async Task<ActionResult<PaginacionResponse<AutorDto>>> ListarViewAutor(int pagina = 1, int resultadoPorPagina = 20)
+        public async Task<ActionResult<PaginacionResponse<AutorDto>>> ListarViewAutor(int pagina = 1, int resultadoPorPagina = 10)
         {
             var response = new PaginacionResponse<AutorDto>();
 
