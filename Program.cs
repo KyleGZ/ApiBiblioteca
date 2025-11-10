@@ -17,6 +17,16 @@ ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 // Add services to the container.
 builder.Services.AddControllers();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()  // Permite tu frontend en localhost:7053
+              .AllowAnyMethod()  // Permite GET, POST, PUT, etc.
+              .AllowAnyHeader(); // Permite cualquier header
+    });
+});
+
 // Configurar Entity Framework
 builder.Services.AddDbContext<DbContextBiblioteca>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("StringConnection")));
@@ -84,6 +94,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowAll"); 
 
 // IMPORTANTE: UseAuthentication debe ir antes de UseAuthorization
 app.UseAuthentication();
