@@ -1,4 +1,5 @@
-﻿using ApiBiblioteca.Models.Dtos;
+﻿using ApiBiblioteca.Helpers;
+using ApiBiblioteca.Models.Dtos;
 using ApiBiblioteca.Settings;
 using MailKit.Net.Smtp;
 using MailKit.Security;
@@ -14,11 +15,13 @@ namespace ApiBiblioteca.Services
         private readonly IDataProtector _protector;
         private readonly string _filePath;
         private EmailSettings _emailSettings;
+        private readonly CryptoHelper _crypto;
 
-        public EmailService(ILogger<EmailService> logger, IDataProtectionProvider dataProtectionProvider, IWebHostEnvironment env)
+        public EmailService(ILogger<EmailService> logger, IConfiguration configuration, IWebHostEnvironment env)
         {
             _logger = logger;
-            _protector = dataProtectionProvider.CreateProtector("EmailSettingsProtector");
+
+            _crypto = new CryptoHelper(configuration);
 
             // ✅ 1. Usa IWebHostEnvironment para que funcione tanto en desarrollo como en producción
             _filePath = Path.Combine(env.ContentRootPath, "App_Data", "emailsettings.json");
@@ -26,7 +29,6 @@ namespace ApiBiblioteca.Services
             // Cargar configuración inicial
             _emailSettings = LoadSettingsAsync().GetAwaiter().GetResult();
         }
-
         private async Task<EmailSettings> LoadSettingsAsync()
         {
             if (!File.Exists(_filePath))
@@ -40,12 +42,41 @@ namespace ApiBiblioteca.Services
 
             if (!string.IsNullOrWhiteSpace(settings.Password))
             {
-                try { settings.Password = _protector.Unprotect(settings.Password); }
-                catch { settings.Password = string.Empty; }
+                try
+                {
+                    settings.Password = _crypto.Decrypt(settings.Password);
+                }
+                catch
+                {
+                    _logger.LogWarning("No se pudo desencriptar la contraseña; se asume que está en texto plano.");
+                }
             }
 
             return settings;
         }
+
+
+        //private async Task<EmailSettings> LoadSettingsAsync()
+        //{
+        //    if (!File.Exists(_filePath))
+        //    {
+        //        _logger.LogWarning("Archivo de configuración de correo no encontrado en {Path}. Se usará configuración vacía.", _filePath);
+        //        return new EmailSettings();
+        //    }
+
+        //    var json = await File.ReadAllTextAsync(_filePath);
+        //    var settings = System.Text.Json.JsonSerializer.Deserialize<EmailSettings>(json) ?? new EmailSettings();
+
+        //    if (!string.IsNullOrWhiteSpace(settings.Password))
+        //    {
+        //        try { settings.Password = _protector.Unprotect(settings.Password); }
+        //        catch { settings.Password = string.Empty; }
+        //    }
+
+        //    return settings;
+        //}
+
+
 
         /*
          * Envía un correo electrónico simple sin archivos adjuntos.
@@ -212,7 +243,7 @@ namespace ApiBiblioteca.Services
                 // 🔐 6. Manejar la contraseña (solo actualizar si se envía)
                 if (!string.IsNullOrWhiteSpace(newSettings.Password))
                 {
-                    currentSettings.Password = _protector.Protect(newSettings.Password);
+                    currentSettings.Password = _crypto.Encrypt(newSettings.Password);
                 }
                 // Si viene null o vacía → conservar la anterior (no se hace nada)
 
