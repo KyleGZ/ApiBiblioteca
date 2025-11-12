@@ -76,63 +76,82 @@ namespace ApiBiblioteca.Controllers
             return Ok(reserva);
         }
 
-        // POST: api/Reservas - Crear nueva reserva
+
+        // POST: api/Reservas/CrearReserva
         [HttpPost("CrearReserva")]
-        public async Task<ActionResult<ReservaResponseDto>> CrearReserva(ReservaDto reservaDto)
+        public async Task<ActionResult<ApiResponse>> CrearReserva(ReservaDto reservaDto)
         {
             try
             {
-                // Validar que el libro existe y está disponible
+                // 1️⃣ Validar existencia del libro
                 var libro = await _context.Libros.FindAsync(reservaDto.IdLibro);
                 if (libro == null)
                 {
-                    return BadRequest(new { message = "El libro no existe" });
+                    return BadRequest(new ApiResponse
+                    {
+                        Success = false,
+                        Message = "El libro no existe"
+                    });
                 }
 
-                if (libro.Estado != "Disponible")
-                {
-                    return BadRequest(new { message = "El libro no está disponible para reserva" });
-                }
-
-                // Validar que el usuario existe
+                // 2️⃣ Validar existencia del usuario
                 var usuario = await _context.Usuarios.FindAsync(reservaDto.IdUsuario);
                 if (usuario == null)
                 {
-                    return BadRequest(new { message = "El usuario no existe" });
+                    return BadRequest(new ApiResponse { 
+                    Success = false,
+                    Message = "El usuario no existe"
+                    });
                 }
 
-                // Verificar si el usuario ya tiene una reserva activa para este libro
+                // 3️⃣ Si el libro está disponible, no se crea reserva
+                if (libro.Estado == "Disponible")
+                {
+                    return BadRequest(new ApiResponse {
+                        Success= false,
+                        Message= "El libro está disponible. Debes acudir a la biblioteca para gestionar el préstamo."
+                    });
+                }
+
+                // 4️⃣ Verificar si el usuario ya tiene una reserva pendiente o confirmada para este libro
                 var reservaExistente = await _context.Reservas
-                    .Where(r => r.IdUsuario == reservaDto.IdUsuario &&
-                           r.IdLibro == reservaDto.IdLibro &&
-                           r.Estado == "Activa")
-                    .FirstOrDefaultAsync();
+                    .FirstOrDefaultAsync(r =>
+                        r.IdUsuario == reservaDto.IdUsuario &&
+                        r.IdLibro == reservaDto.IdLibro &&
+                        (r.Estado == "Pendiente" || r.Estado == "Confirmada")
+                    );
 
                 if (reservaExistente != null)
                 {
-                    return BadRequest(new { message = "Ya tienes una reserva activa para este libro" });
+                    return BadRequest(new ApiResponse
+                    {
+
+                        Success = false,
+                        Message = "Ya tienes una reserva activa o pendiente para este libro."
+                    });
                 }
 
-                // Crear la nueva reserva
+                // 5️⃣ Calcular la prioridad automáticamente
+                var maxPrioridad = await _context.Reservas
+                    .Where(r => r.IdLibro == reservaDto.IdLibro && r.Estado == "Pendiente")
+                    .MaxAsync(r => (int?)r.Prioridad) ?? 0;
+
+                int nuevaPrioridad = maxPrioridad + 1;
+
+                // 6️⃣ Crear la nueva reserva con estado 'Pendiente'
                 var reserva = new Reserva
                 {
                     IdUsuario = reservaDto.IdUsuario,
                     IdLibro = reservaDto.IdLibro,
                     FechaReserva = DateTime.Now,
-                    Prioridad = reservaDto.Prioridad,
-                    Estado = "Activa",
-                    IdLibroNavigation = libro,
-                    IdUsuarioNavigation = usuario
+                    Prioridad = nuevaPrioridad,
+                    Estado = "Pendiente"
                 };
-
-                // Cambiar estado del libro a "Reservado"
-                libro.Estado = "Reservado";
-                _context.Entry(libro).State = EntityState.Modified;
 
                 _context.Reservas.Add(reserva);
                 await _context.SaveChangesAsync();
 
-                // Obtener la reserva creada con los datos de navegación
+                // 7️⃣ Consultar la reserva creada con navegación
                 var reservaCreada = await _context.Reservas
                     .Include(r => r.IdLibroNavigation)
                     .Include(r => r.IdUsuarioNavigation)
@@ -151,13 +170,111 @@ namespace ApiBiblioteca.Controllers
                     })
                     .FirstOrDefaultAsync();
 
-                return CreatedAtAction(nameof(GetReserva), new { id = reserva.IdReserva }, reservaCreada);
+                // 8️⃣ Retornar respuesta exitosa
+                return Ok(new ApiResponse
+                {
+                    Success = true,
+                    Message = "Reserva creada exitosamente.",
+                    Data = reservaCreada
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
+                return StatusCode(500, new ApiResponse { 
+                Success = false,
+                Message = "Error interno del servidor",
+                Data = ex.InnerException.Message
+                });
             }
         }
+
+
+        /*
+         * Metodo opcional
+         */
+
+        //// POST: api/Reservas - Crear nueva reserva
+        //[HttpPost("CrearReserva")]
+        //public async Task<ActionResult<ReservaResponseDto>> CrearReserva(ReservaDto reservaDto)
+        //{
+        //    try
+        //    {
+        //        // Validar que el libro existe y está disponible
+        //        var libro = await _context.Libros.FindAsync(reservaDto.IdLibro);
+        //        if (libro == null)
+        //        {
+        //            return BadRequest(new { message = "El libro no existe" });
+        //        }
+
+        //        if (libro.Estado != "Disponible")
+        //        {
+        //            return BadRequest(new { message = "El libro no está disponible para reserva" });
+        //        }
+
+        //        // Validar que el usuario existe
+        //        var usuario = await _context.Usuarios.FindAsync(reservaDto.IdUsuario);
+        //        if (usuario == null)
+        //        {
+        //            return BadRequest(new { message = "El usuario no existe" });
+        //        }
+
+        //        // Verificar si el usuario ya tiene una reserva activa para este libro
+        //        var reservaExistente = await _context.Reservas
+        //            .Where(r => r.IdUsuario == reservaDto.IdUsuario &&
+        //                   r.IdLibro == reservaDto.IdLibro &&
+        //                   r.Estado == "Activa")
+        //            .FirstOrDefaultAsync();
+
+        //        if (reservaExistente != null)
+        //        {
+        //            return BadRequest(new { message = "Ya tienes una reserva activa para este libro" });
+        //        }
+
+        //        // Crear la nueva reserva
+        //        var reserva = new Reserva
+        //        {
+        //            IdUsuario = reservaDto.IdUsuario,
+        //            IdLibro = reservaDto.IdLibro,
+        //            FechaReserva = DateTime.Now,
+        //            Prioridad = reservaDto.Prioridad,
+        //            Estado = "Activa",
+        //            IdLibroNavigation = libro,
+        //            IdUsuarioNavigation = usuario
+        //        };
+
+        //        // Cambiar estado del libro a "Reservado"
+        //        libro.Estado = "Reservado";
+        //        _context.Entry(libro).State = EntityState.Modified;
+
+        //        _context.Reservas.Add(reserva);
+        //        await _context.SaveChangesAsync();
+
+        //        // Obtener la reserva creada con los datos de navegación
+        //        var reservaCreada = await _context.Reservas
+        //            .Include(r => r.IdLibroNavigation)
+        //            .Include(r => r.IdUsuarioNavigation)
+        //            .Where(r => r.IdReserva == reserva.IdReserva)
+        //            .Select(r => new ReservaResponseDto
+        //            {
+        //                IdReserva = r.IdReserva,
+        //                IdUsuario = r.IdUsuario,
+        //                IdLibro = r.IdLibro,
+        //                FechaReserva = r.FechaReserva,
+        //                Prioridad = r.Prioridad,
+        //                Estado = r.Estado,
+        //                TituloLibro = r.IdLibroNavigation.Titulo,
+        //                NombreUsuario = r.IdUsuarioNavigation.Nombre,
+        //                Isbn = r.IdLibroNavigation.Isbn
+        //            })
+        //            .FirstOrDefaultAsync();
+
+        //        return CreatedAtAction(nameof(GetReserva), new { id = reserva.IdReserva }, reservaCreada);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
+        //    }
+        //}
 
         // DELETE: api/Reservas/5 - Eliminar/Cancelar reserva
         [HttpDelete("EliminarReserva")]
