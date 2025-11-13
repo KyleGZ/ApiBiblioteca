@@ -13,6 +13,7 @@ namespace ApiBiblioteca.Services
     {
         private readonly IConfiguration _configuration;
         private readonly DbContextBiblioteca _context;
+        public static int UsuarioAutenticadoId { get; private set; } = 0;
 
         public AutorizacionService(IConfiguration configuration, DbContextBiblioteca context)
         {
@@ -20,10 +21,11 @@ namespace ApiBiblioteca.Services
             _context = context;
         }
 
-        private string GenerarToken(string email, List<string> roles)
+        private string GenerarToken(int userId, string email, List<string> roles)
         {
             var claims = new List<Claim>
             {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                 new Claim(ClaimTypes.Email, email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
@@ -76,7 +78,7 @@ namespace ApiBiblioteca.Services
                 };
             }
 
-            // Bloquear si el usuario está Inactivo (ignorar mayúsculas/minúsculas y espacios)
+            // Bloquear si el usuario está Inactivo
             var estado = (temp.Estado ?? string.Empty).Trim();
             if (estado.Equals("Inactivo", StringComparison.OrdinalIgnoreCase))
             {
@@ -94,7 +96,6 @@ namespace ApiBiblioteca.Services
                 .Where(rol => !string.IsNullOrWhiteSpace(rol))
                 .ToList() ?? new List<string>();
 
-            // Bloquear si no tiene roles
             if (!roles.Any())
             {
                 return new AutorizacionResponse
@@ -104,9 +105,10 @@ namespace ApiBiblioteca.Services
                     Msj = "El usuario no tiene roles asignados"
                 };
             }
+            UsuarioAutenticadoId = temp.IdUsuario;
 
-            // Generar token
-            string tokenCreado = GenerarToken(temp.Email, roles);
+            // Generar token con Id de usuario
+            string tokenCreado = GenerarToken(temp.IdUsuario, temp.Email, roles);
 
             return new AutorizacionResponse
             {
@@ -118,8 +120,18 @@ namespace ApiBiblioteca.Services
                 Nombre = temp.Nombre,
                 Roles = roles
             };
+            
+        }
+        // Método para obtener el ID del usuario autenticado
+        public static int ObtenerUsuarioAutenticadoId()
+        {
+            return UsuarioAutenticadoId;
         }
 
-
+        // Método para limpiar el usuario autenticado (logout)
+        public static void LimpiarUsuarioAutenticado()
+        {
+            UsuarioAutenticadoId = 0;
+        }
     }
 }
