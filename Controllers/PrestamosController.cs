@@ -1,18 +1,21 @@
 ﻿using ApiBiblioteca.Models;
 using ApiBiblioteca.Models.Dtos;
 using ApiBiblioteca.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
+using System.Security.Claims;
 namespace ApiBiblioteca.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    //[Authorize] // Añadir esto para requerir autenticación
     public class PrestamosController : ControllerBase
     {
         private readonly DbContextBiblioteca _context;
         private readonly IAutorizacionService _autorizacionService;
         private readonly IEmailService _emailService;
+        private readonly AutorizacionService _idUsuario;
 
         public PrestamosController(DbContextBiblioteca context, IAutorizacionService autorizacionService, IEmailService emailService)
         {
@@ -63,19 +66,108 @@ namespace ApiBiblioteca.Controllers
         }
 
 
-//------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-       
-        //Guardar prestamos
+        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+        ////Guardar prestamos
+        //[HttpPost]
+        //public async Task<ActionResult<Prestamo>> CreatePrestamo([FromBody] CrearPrestamoDto prestamoDto)
+        //{
+        //    try
+        //    {
+        //        // Validar que el usuario existe
+        //        var usuario = await _context.Usuarios.FindAsync(prestamoDto.UsuarioId);
+        //        if (usuario == null)
+        //        {
+        //            return BadRequest(new { message = "El usuario no existe" });
+        //        }
+
+        //        // Validar que el libro existe
+        //        var libro = await _context.Libros.FindAsync(prestamoDto.LibroId);
+        //        if (libro == null)
+        //        {
+        //            return BadRequest(new { message = "El libro no existe" });
+        //        }
+
+        //        // Validar disponibilidad - verificar si el libro ya está prestado
+        //        var libroPrestado = await _context.Prestamos
+        //            .AnyAsync(p => p.IdLibro == prestamoDto.LibroId && p.Estado == "Activo");
+
+        //        if (libroPrestado)
+        //        {
+        //            return BadRequest(new { message = "El libro no está disponible (ya está prestado)" });
+        //        }
+
+        //        // Validar fechas
+        //        if (prestamoDto.FechaVencimiento <= prestamoDto.FechaPrestamo)
+        //        {
+        //            return BadRequest(new { message = "La fecha de vencimiento debe ser posterior a la fecha de préstamo" });
+        //        }
+
+        //        // Crear el préstamo
+        //        var prestamo = new Prestamo
+        //        {
+        //            IdLibro = prestamoDto.LibroId,
+        //            IdUsuario = prestamoDto.UsuarioId,
+        //            FechaPrestamo = prestamoDto.FechaPrestamo,
+        //            FechaDevolucionPrevista = prestamoDto.FechaVencimiento,
+        //            FechaDevolucionReal = null,
+        //            Renovaciones = 0,
+        //            Estado = "Activo"
+        //        };
+
+        //        // Guardar en la base de datos
+        //        _context.Prestamos.Add(prestamo);
+        //        await _context.SaveChangesAsync();
+
+        //        // Cargar datos relacionados
+        //        await _context.Entry(prestamo)
+        //            .Reference(p => p.IdUsuarioNavigation)
+        //            .LoadAsync();
+
+        //        await _context.Entry(prestamo)
+        //            .Reference(p => p.IdLibroNavigation)
+        //            .LoadAsync();
+
+        //        // Retornar respuesta
+        //        var response = new
+        //        {
+        //            Id = prestamo.IdPrestamo,
+        //            IdLibro = prestamo.IdLibro,
+        //            IdUsuario = prestamo.IdUsuario,
+        //            prestamo.FechaPrestamo,
+        //            FechaVencimiento = prestamo.FechaDevolucionPrevista,
+        //            LibroInfo = prestamo.IdLibroNavigation != null ?
+        //                $"{prestamo.IdLibroNavigation.Titulo} - {prestamo.IdLibroNavigation.Isbn}" : $"Libro {prestamo.IdLibro}",
+        //            UsuarioInfo = prestamo.IdUsuarioNavigation != null ?
+        //                $"{prestamo.IdUsuarioNavigation.Nombre} - {prestamo.IdUsuarioNavigation.Cedula}" : $"Usuario {prestamo.IdUsuario}",
+        //            prestamo.Estado
+        //        };
+
+        //        return CreatedAtAction(nameof(GetUltimoPrestamo), response);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { message = "Error al crear el préstamo", error = ex.Message });
+        //    }
+        //}
         [HttpPost]
         public async Task<ActionResult<Prestamo>> CreatePrestamo([FromBody] CrearPrestamoDto prestamoDto)
         {
             try
             {
-                // Validar que el usuario existe
-                var usuario = await _context.Usuarios.FindAsync(prestamoDto.UsuarioId);
+                // Simplemente usar el UsuarioId que viene en el DTO
+                // (ya que no tienes autenticación funcionando correctamente)
+                int usuarioAutenticadoId = AutorizacionService.ObtenerUsuarioAutenticadoId();
+
+                // Validar que el usuario existe y está activo
+                var usuario = await _context.Usuarios.FindAsync(usuarioAutenticadoId);
                 if (usuario == null)
                 {
                     return BadRequest(new { message = "El usuario no existe" });
+                }
+                if (!string.Equals(usuario.Estado?.Trim(), "Activo", StringComparison.OrdinalIgnoreCase))
+                {
+                    return BadRequest(new { message = "El usuario no está activo" });
                 }
 
                 // Validar que el libro existe
@@ -104,7 +196,7 @@ namespace ApiBiblioteca.Controllers
                 var prestamo = new Prestamo
                 {
                     IdLibro = prestamoDto.LibroId,
-                    IdUsuario = prestamoDto.UsuarioId,
+                    IdUsuario = usuarioAutenticadoId,
                     FechaPrestamo = prestamoDto.FechaPrestamo,
                     FechaDevolucionPrevista = prestamoDto.FechaVencimiento,
                     FechaDevolucionReal = null,
@@ -148,9 +240,9 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
-//------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        
-        
+        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
         // Usuarios Activos
         [HttpGet("usuarios/activos")]
         public async Task<ActionResult<IEnumerable<object>>> GetUsuariosActivos()
