@@ -217,7 +217,7 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
-        // DELETE: api/Reservas/5 - Eliminar/Cancelar reserva
+        // DELETE
         [HttpDelete("EliminarReserva")]
         public async Task<IActionResult> EliminarReserva(int id)
         {
