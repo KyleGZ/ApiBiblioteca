@@ -22,13 +22,48 @@ namespace ApiBiblioteca.Controllers
 
         }
 
-        // GET: api/Reservas - Lista todas las reservas
+        //// GET: api/Reservas - Lista todas las reservas
+        //[HttpGet("ListaReservas")]
+        //public async Task<ActionResult<IEnumerable<ReservaResponseDto>>> GetReservas()
+        //{
+        //    var reservas = await _context.Reservas
+        //        .Include(r => r.IdLibroNavigation)      // Incluir datos del libro
+        //        .Include(r => r.IdUsuarioNavigation)    // Incluir datos del usuario
+        //        .Select(r => new ReservaResponseDto
+        //        {
+        //            IdReserva = r.IdReserva,
+        //            IdUsuario = r.IdUsuario,
+        //            IdLibro = r.IdLibro,
+        //            FechaReserva = r.FechaReserva,
+        //            Prioridad = r.Prioridad,
+        //            Estado = r.Estado,
+        //            TituloLibro = r.IdLibroNavigation.Titulo,
+        //            NombreUsuario = r.IdUsuarioNavigation.Nombre,
+        //            Isbn = r.IdLibroNavigation.Isbn
+        //        })
+        //        .ToListAsync();
+
+        //    return Ok(reservas);
+        //}
+
+        // Lista reservas
         [HttpGet("ListaReservas")]
-        public async Task<ActionResult<IEnumerable<ReservaResponseDto>>> GetReservas()
+        public async Task<ActionResult<IEnumerable<ReservaResponseDto>>> GetReservas([FromQuery] int? userId = null)
         {
-            var reservas = await _context.Reservas
-                .Include(r => r.IdLibroNavigation)      // Incluir datos del libro
-                .Include(r => r.IdUsuarioNavigation)    // Incluir datos del usuario
+            //  consulta base
+            var query = _context.Reservas
+                .Include(r => r.IdLibroNavigation)
+                .Include(r => r.IdUsuarioNavigation)
+                .AsQueryable();
+
+            // FILTRAR por usuario SI se especifica
+            if (userId.HasValue)
+            {
+                query = query.Where(r => r.IdUsuario == userId.Value);
+            }
+
+            // EJECUTAR la consulta
+            var reservas = await query
                 .Select(r => new ReservaResponseDto
                 {
                     IdReserva = r.IdReserva,
@@ -252,42 +287,33 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
-        //// DELETE: api/Reservas/5/cancelar - Alternativa: Cancelar reserva (cambiar estado en lugar de eliminar)
-        //[HttpDelete("{id}/cancelar")]
-        //public async Task<IActionResult> CancelarReserva(int id)
-        //{
-        //    try
-        //    {
-        //        var reserva = await _context.Reservas
-        //            .Include(r => r.IdLibroNavigation)
-        //            .FirstOrDefaultAsync(r => r.IdReserva == id);
+        // Endpoint para obtener conteo de reservas activas por usuario
+        [HttpGet("ConteoReservasActivas")]
+        public async Task<ActionResult<ApiResponse>> GetConteoReservasActivas([FromQuery] int userId)
+        {
+            try
+            {
+                var conteo = await _context.Reservas
+                    .Where(r => r.IdUsuario == userId && r.Estado == "Activa")
+                    .CountAsync();
 
-        //        if (reserva == null)
-        //        {
-        //            return NotFound(new { message = $"No se encontró la reserva con ID {id}" });
-        //        }
-
-        //        // Liberar el libro
-        //        var libro = await _context.Libros.FindAsync(reserva.IdLibro);
-        //        if (libro != null)
-        //        {
-        //            libro.Estado = "Disponible";
-        //            _context.Entry(libro).State = EntityState.Modified;
-        //        }
-
-        //        // Cambiar estado de la reserva a "Cancelada" en lugar de eliminar
-        //        reserva.Estado = "Cancelada";
-        //        _context.Entry(reserva).State = EntityState.Modified;
-
-        //        await _context.SaveChangesAsync();
-
-        //        return Ok(new { message = "Reserva cancelada correctamente" });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, new { message = "Error al cancelar la reserva", error = ex.Message });
-        //    }
-        //}
+                return Ok(new ApiResponse
+                {
+                    Success = true,
+                    Message = "Conteo obtenido exitosamente",
+                    Data = conteo
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ApiResponse
+                {
+                    Success = false,
+                    Message = "Error al obtener el conteo",
+                    Data = 0
+                });
+            }
+        }
 
     }//
 }//
