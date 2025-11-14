@@ -46,11 +46,9 @@ namespace ApiBiblioteca.Controllers
         //    return Ok(reservas);
         //}
 
-        // Lista reservas
         [HttpGet("ListaReservas")]
         public async Task<ActionResult<IEnumerable<ReservaResponseDto>>> GetReservas([FromQuery] int? userId = null)
         {
-            //  consulta base
             var query = _context.Reservas
                 .Include(r => r.IdLibroNavigation)
                 .Include(r => r.IdUsuarioNavigation)
@@ -62,7 +60,9 @@ namespace ApiBiblioteca.Controllers
                 query = query.Where(r => r.IdUsuario == userId.Value);
             }
 
-            // EJECUTAR la consulta
+            // Filtrar solo reservas activas (no canceladas)
+            //query = query.Where(r => r.Estado == "Activa");
+
             var reservas = await query
                 .Select(r => new ReservaResponseDto
                 {
@@ -80,6 +80,41 @@ namespace ApiBiblioteca.Controllers
 
             return Ok(reservas);
         }
+
+        // Lista reservas
+        //[HttpGet("ListaReservas")]
+        //public async Task<ActionResult<IEnumerable<ReservaResponseDto>>> GetReservas([FromQuery] int? userId = null)
+        //{
+        //    //  consulta base
+        //    var query = _context.Reservas
+        //        .Include(r => r.IdLibroNavigation)
+        //        .Include(r => r.IdUsuarioNavigation)
+        //        .AsQueryable();
+
+        //    // FILTRAR por usuario SI se especifica
+        //    if (userId.HasValue)
+        //    {
+        //        query = query.Where(r => r.IdUsuario == userId.Value);
+        //    }
+
+        //    // EJECUTAR la consulta
+        //    var reservas = await query
+        //        .Select(r => new ReservaResponseDto
+        //        {
+        //            IdReserva = r.IdReserva,
+        //            IdUsuario = r.IdUsuario,
+        //            IdLibro = r.IdLibro,
+        //            FechaReserva = r.FechaReserva,
+        //            Prioridad = r.Prioridad,
+        //            Estado = r.Estado,
+        //            TituloLibro = r.IdLibroNavigation.Titulo,
+        //            NombreUsuario = r.IdUsuarioNavigation.Nombre,
+        //            Isbn = r.IdLibroNavigation.Isbn
+        //        })
+        //        .ToListAsync();
+
+        //    return Ok(reservas);
+        //}
 
         // GET: api/Reservas/5 - Búsqueda por ID de reserva
         [HttpGet("BuscarReservaID")]
@@ -252,7 +287,6 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
-        // DELETE
         [HttpDelete("EliminarReserva")]
         public async Task<IActionResult> EliminarReserva(int id)
         {
@@ -267,6 +301,9 @@ namespace ApiBiblioteca.Controllers
                     return NotFound(new { message = $"No se encontró la reserva con ID {id}" });
                 }
 
+                // cambiar estado a "Cancelada"
+                reserva.Estado = "Cancelada";
+
                 // Liberar el libro (cambiar estado a "Disponible")
                 var libro = await _context.Libros.FindAsync(reserva.IdLibro);
                 if (libro != null)
@@ -275,17 +312,50 @@ namespace ApiBiblioteca.Controllers
                     _context.Entry(libro).State = EntityState.Modified;
                 }
 
-                // Eliminar la reserva de la base de datos
-                _context.Reservas.Remove(reserva);
                 await _context.SaveChangesAsync();
 
-                return Ok(new { message = "Reserva eliminada correctamente" });
+                return Ok(new { message = "Reserva cancelada correctamente" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Error al eliminar la reserva", error = ex.Message });
+                return StatusCode(500, new { message = "Error al cancelar la reserva", error = ex.Message });
             }
         }
+
+        //// DELETE
+        //[HttpDelete("EliminarReserva")]
+        //public async Task<IActionResult> EliminarReserva(int id)
+        //{
+        //    try
+        //    {
+        //        var reserva = await _context.Reservas
+        //            .Include(r => r.IdLibroNavigation)
+        //            .FirstOrDefaultAsync(r => r.IdReserva == id);
+
+        //        if (reserva == null)
+        //        {
+        //            return NotFound(new { message = $"No se encontró la reserva con ID {id}" });
+        //        }
+
+        //        // Liberar el libro (cambiar estado a "Disponible")
+        //        var libro = await _context.Libros.FindAsync(reserva.IdLibro);
+        //        if (libro != null)
+        //        {
+        //            libro.Estado = "Disponible";
+        //            _context.Entry(libro).State = EntityState.Modified;
+        //        }
+
+        //        // Eliminar la reserva de la base de datos
+        //        _context.Reservas.Remove(reserva);
+        //        await _context.SaveChangesAsync();
+
+        //        return Ok(new { message = "Reserva eliminada correctamente" });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { message = "Error al eliminar la reserva", error = ex.Message });
+        //    }
+        //}
 
         // Endpoint para obtener conteo de reservas activas por usuario
         [HttpGet("ConteoReservasActivas")]
