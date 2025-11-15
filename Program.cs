@@ -39,7 +39,18 @@ builder.Services.AddQuartz(q =>
         .ForJob(jobKey)
         .WithIdentity("RecordarPrestamosProntosVencerJob-trigger")
         .WithCronSchedule("0 0 8 * * ?")); // Ejecutar cada dia 08:00 AM
+
+
+    var jobKey2 = new JobKey("ProcesarReservasVencidasJob");
+    q.AddJob<ProcesarReservasVencidasJob>(opts => opts.WithIdentity(jobKey2));
+    q.AddTrigger(t => t
+        .ForJob(jobKey2)
+        .WithIdentity("ProcesarReservasVencidasJob-trigger")
+        .WithCronSchedule("0 0/10 * * * ?")); // Ejecutar cada 3 horas
 });
+
+
+
 
 builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 

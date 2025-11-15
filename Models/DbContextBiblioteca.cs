@@ -263,31 +263,69 @@ public partial class DbContextBiblioteca : DbContext
                         j.IndexerProperty<int>("IdGenero").HasColumnName("id_genero");
                     });
         });
-
         modelBuilder.Entity<Notificacion>(entity =>
         {
-            entity.HasKey(e => e.IdNotificacion).HasName("PK__notifica__8270F9A516AB145F");
+            entity.HasKey(e => e.IdNotificacion)
+                  .HasName("PK__notifica__8270F9A516AB145F");
 
             entity.ToTable("notificacion");
 
             entity.Property(e => e.IdNotificacion).HasColumnName("id_notificacion");
+
             entity.Property(e => e.Asunto)
                 .HasMaxLength(200)
                 .IsUnicode(false)
                 .HasColumnName("asunto");
+
             entity.Property(e => e.FechaEnvio)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnName("fecha_envio");
+
             entity.Property(e => e.IdUsuario).HasColumnName("id_usuario");
+
             entity.Property(e => e.Mensaje)
                 .HasColumnType("text")
                 .HasColumnName("mensaje");
 
-            entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.Notificacions)
+            // NUEVA COLUMNA
+            entity.Property(e => e.Estado)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasDefaultValue("No leida")
+                .HasColumnName("estado");
+
+            entity.HasOne(d => d.IdUsuarioNavigation)
+                .WithMany(p => p.Notificacions)
                 .HasForeignKey(d => d.IdUsuario)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__notificac__id_us__02084FDA");
         });
+
+
+        //modelBuilder.Entity<Notificacion>(entity =>
+        //{
+        //    entity.HasKey(e => e.IdNotificacion).HasName("PK__notifica__8270F9A516AB145F");
+
+        //    entity.ToTable("notificacion");
+
+        //    entity.Property(e => e.IdNotificacion).HasColumnName("id_notificacion");
+        //    entity.Property(e => e.Asunto)
+        //        .HasMaxLength(200)
+        //        .IsUnicode(false)
+        //        .HasColumnName("asunto");
+        //    entity.Property(e => e.FechaEnvio)
+        //        .HasDefaultValueSql("(getdate())")
+        //        .HasColumnName("fecha_envio");
+        //    entity.Property(e => e.IdUsuario).HasColumnName("id_usuario");
+        //    entity.Property(e => e.Mensaje)
+        //        .HasColumnType("text")
+        //        .HasColumnName("mensaje");
+
+        //    entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.Notificacions)
+        //        .HasForeignKey(d => d.IdUsuario)
+        //        .OnDelete(DeleteBehavior.ClientSetNull)
+        //        .HasConstraintName("FK__notificac__id_us__02084FDA");
+        //});
 
         modelBuilder.Entity<Prestamo>(entity =>
         {

@@ -15,5 +15,6 @@ public partial class Notificacion
 
     public DateTime FechaEnvio { get; set; }
 
+    public string Estado { get; set; }
     public virtual Usuario IdUsuarioNavigation { get; set; } = null!;
 }

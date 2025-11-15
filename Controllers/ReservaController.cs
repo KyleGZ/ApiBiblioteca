@@ -232,7 +232,7 @@ namespace ApiBiblioteca.Controllers
                 };
 
                 // Cambiar estado del libro a "No disponible"
-                libro.Estado = "No disponible";
+                libro.Estado = "Reservado";
                 _context.Entry(libro).State = EntityState.Modified;
 
                 _context.Reservas.Add(reserva);
