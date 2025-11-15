@@ -687,6 +687,7 @@ namespace ApiBiblioteca.Controllers
                     return NotFound(new { message = "Libro no encontrado" });
                 var libroDetalle = new LibroDetalleDto
                 {
+                    IdLibro = libro.IdLibro,
                     Isbn = libro.Isbn,
                     Titulo = libro.Titulo,
                     Autor = libro.IdAutors.Select(a => a.Nombre).ToList(),
@@ -694,7 +695,8 @@ namespace ApiBiblioteca.Controllers
                     Editorial = libro.IdEditorialNavigation?.Nombre ?? "Desconocida",
                     Seccion = libro.IdSeccionNavigation?.Nombre ?? "Desconocida",
                     Descripcion = libro.Descripcion ?? "Desconocida",
-                    Portada = libro.PortadaUrl
+                    Portada = libro.PortadaUrl,
+                    Estado = libro.Estado
                 };
                 return Ok(libroDetalle);
             }
