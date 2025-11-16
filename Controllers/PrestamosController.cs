@@ -155,19 +155,26 @@ namespace ApiBiblioteca.Controllers
         {
             try
             {
-                // Simplemente usar el UsuarioId que viene en el DTO
-                // (ya que no tienes autenticación funcionando correctamente)
-                int usuarioAutenticadoId = AutorizacionService.ObtenerUsuarioAutenticadoId();
-
-                // Validar que el usuario existe y está activo
-                var usuario = await _context.Usuarios.FindAsync(usuarioAutenticadoId);
-                if (usuario == null)
+                // Obtener el ID del admin autenticado (solo para logging/auditoría si es necesario)
+                int adminAutenticadoId = AutorizacionService.ObtenerUsuarioAutenticadoId();
+                
+                if (adminAutenticadoId == 0)
                 {
-                    return BadRequest(new { message = "El usuario no existe" });
+                    return BadRequest(new { message = "No hay usuario autenticado. Por favor, inicie sesión." });
                 }
-                if (!string.Equals(usuario.Estado?.Trim(), "Activo", StringComparison.OrdinalIgnoreCase))
+
+                // Usar el UsuarioId del DTO (este es el LECTOR que recibirá el préstamo)
+                int usuarioLectorId = prestamoDto.UsuarioId;
+
+                // Validar que el usuario lector existe y está activo
+                var usuarioLector = await _context.Usuarios.FindAsync(usuarioLectorId);
+                if (usuarioLector == null)
                 {
-                    return BadRequest(new { message = "El usuario no está activo" });
+                    return BadRequest(new { message = "El usuario lector no existe" });
+                }
+                if (!string.Equals(usuarioLector.Estado?.Trim(), "Activo", StringComparison.OrdinalIgnoreCase))
+                {
+                    return BadRequest(new { message = "El usuario lector no está activo" });
                 }
 
                 // Validar que el libro existe
@@ -192,11 +199,11 @@ namespace ApiBiblioteca.Controllers
                     return BadRequest(new { message = "La fecha de vencimiento debe ser posterior a la fecha de préstamo" });
                 }
 
-                // Crear el préstamo
+                // Crear el préstamo CON EL USUARIO LECTOR (NO el admin)
                 var prestamo = new Prestamo
                 {
                     IdLibro = prestamoDto.LibroId,
-                    IdUsuario = usuarioAutenticadoId,
+                    IdUsuario = usuarioLectorId, // ← USAR EL LECTOR, no el admin
                     FechaPrestamo = prestamoDto.FechaPrestamo,
                     FechaDevolucionPrevista = prestamoDto.FechaVencimiento,
                     FechaDevolucionReal = null,
@@ -222,14 +229,15 @@ namespace ApiBiblioteca.Controllers
                 {
                     Id = prestamo.IdPrestamo,
                     IdLibro = prestamo.IdLibro,
-                    IdUsuario = prestamo.IdUsuario,
+                    IdUsuario = prestamo.IdUsuario, // Este ahora será el lector
                     prestamo.FechaPrestamo,
                     FechaVencimiento = prestamo.FechaDevolucionPrevista,
                     LibroInfo = prestamo.IdLibroNavigation != null ?
                         $"{prestamo.IdLibroNavigation.Titulo} - {prestamo.IdLibroNavigation.Isbn}" : $"Libro {prestamo.IdLibro}",
                     UsuarioInfo = prestamo.IdUsuarioNavigation != null ?
                         $"{prestamo.IdUsuarioNavigation.Nombre} - {prestamo.IdUsuarioNavigation.Cedula}" : $"Usuario {prestamo.IdUsuario}",
-                    prestamo.Estado
+                    prestamo.Estado,
+                    CreadoPorAdmin = adminAutenticadoId // Opcional: para saber qué admin lo creó
                 };
 
                 return CreatedAtAction(nameof(GetUltimoPrestamo), response);
