@@ -27,40 +27,35 @@ namespace ApiBiblioteca.Controllers
         }
 
         [HttpGet("ObtenerNotificaciones")]
-        public async Task<ActionResult<ApiResponse>> ObtenerNotificaciones([FromQuery] int idUsuario)
+        public async Task<ActionResult<List<NotificacionView>>> ObtenerNotificaciones([FromQuery] int idUsuario)
         {
+            if (idUsuario <= 0)
+            {
+                return BadRequest("El ID de usuario proporcionado no es válido.");
+            }
+
             try
             {
-                if (idUsuario <= 0)
-                {
-                    return BadRequest(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "El ID de usuario proporcionado no es válido.",
-                        Data = null
-                    });
-                }
-
                 var notificaciones = await _context.Notificacions
                     .Where(n => n.IdUsuario == idUsuario)
                     .OrderByDescending(n => n.FechaEnvio)
+                    .Select(n => new NotificacionView
+                    {
+                        IdNotificacion = n.IdNotificacion,
+                        IdUsuario = n.IdUsuario,
+                        Asunto = n.Asunto,
+                        Mensaje = n.Mensaje,
+                        FechaEnvio = n.FechaEnvio,
+                        Estado = n.Estado
+                    })
                     .ToListAsync();
 
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Notificaciones obtenidas exitosamente.",
-                    Data = notificaciones
-                });
+                return Ok(notificaciones);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new ApiResponse
-                {
-                    Success = false,
-                    Message = $"Ocurrió un error al obtener las notificaciones: {ex.Message}",
-                    Data = null
-                });
+                // Opcional: puedes también devolver StatusCode(500, "mensaje") o registrar el error
+                return StatusCode(500, $"Ocurrió un error al obtener las notificaciones: {ex.Message}");
             }
         }
 
