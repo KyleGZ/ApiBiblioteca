@@ -397,6 +397,38 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
+        [HttpPost("GetEstadisticasPorFiltro")]
+        public async Task<ActionResult<EstadisticasPrestamosDTO>> GetEstadisticasPorFiltro([FromBody] FiltroEstadisticasDTO filtro)
+        {
+            try
+            {
+                var estadisticas = await _estadisticasService.ObtenerEstadisticasPorRangoAsync(filtro);
+                return Ok(estadisticas);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error al obtener estadísticas: {ex.Message}");
+            }
+        }
+
+        [HttpPost("DescargarReporteExcel")]
+        public async Task<IActionResult> DescargarReporteExcel([FromBody] FiltroEstadisticasDTO filtro)
+        {
+            try
+            {
+                var excelBytes = await _estadisticasService.GenerarReporteExcelAsync(filtro);
+
+                var fileName = $"ReportePrestamos_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                return File(excelBytes,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileName);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error al generar reporte: {ex.Message}");
+            }
+        }
+
 
     }//fin del public
 }//fin del namespace
