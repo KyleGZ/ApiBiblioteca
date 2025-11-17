@@ -22,12 +22,14 @@ namespace ApiBiblioteca.Controllers
         private readonly IAutorizacionService _autorizacionService;
         private readonly IEmailService _emailService;
         private readonly AutorizacionService _idUsuario;
+        private readonly IEstadisticasService _estadisticasService;
 
-        public PrestamosController(DbContextBiblioteca context, IAutorizacionService autorizacionService, IEmailService emailService)
+        public PrestamosController(DbContextBiblioteca context, IAutorizacionService autorizacionService, IEmailService emailService, IEstadisticasService estadisticasService)
         {
             _context = context;
             _autorizacionService = autorizacionService;
             _emailService = emailService;
+            _estadisticasService = estadisticasService;
         }
 
         //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -377,6 +379,24 @@ namespace ApiBiblioteca.Controllers
                 return StatusCode(500, new { message = "Error al cargar préstamos activos", error = ex.Message });
             }
         }
+
+        ///------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+        /// 
+        [HttpGet("GetEstadisticasPrestamos")]
+        public async Task<ActionResult<EstadisticasPrestamosDTO>> GetEstadisticasPrestamos()
+        {
+            try
+            {
+                var estadisticas = await _estadisticasService.ObtenerEstadisticasPrestamosAsync();
+                return Ok(estadisticas);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error al obtener estadísticas: {ex.Message}");
+            }
+        }
+
 
     }//fin del public
 }//fin del namespace

@@ -89,6 +89,7 @@ builder.Services.Configure<EmailSettings>(
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IPasswordResetService, PasswordService>();
 builder.Services.AddScoped<INotificacionesServices, NotificacionesServices>();
+builder.Services.AddScoped<IEstadisticasService, EstadisticasService>();
 
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
