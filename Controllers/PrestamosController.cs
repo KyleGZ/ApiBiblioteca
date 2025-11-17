@@ -7,6 +7,12 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 namespace ApiBiblioteca.Controllers
 {
+    // DTO para actualizar solo la fecha de devolución prevista
+    public class ActualizarFechaVencimientoDto
+    {
+        public DateTime FechaVencimiento { get; set; }
+    }
+
     [ApiController]
     [Route("api/[controller]")]
     //[Authorize] // Añadir esto para requerir autenticación
@@ -24,8 +30,7 @@ namespace ApiBiblioteca.Controllers
             _emailService = emailService;
         }
 
-
- //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         //Ultimo prestamo emitido
         [HttpGet("ultimo")]
         public async Task<ActionResult<object>> GetUltimoPrestamo()
@@ -65,108 +70,19 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
-
         //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-        ////Guardar prestamos
-        //[HttpPost]
-        //public async Task<ActionResult<Prestamo>> CreatePrestamo([FromBody] CrearPrestamoDto prestamoDto)
-        //{
-        //    try
-        //    {
-        //        // Validar que el usuario existe
-        //        var usuario = await _context.Usuarios.FindAsync(prestamoDto.UsuarioId);
-        //        if (usuario == null)
-        //        {
-        //            return BadRequest(new { message = "El usuario no existe" });
-        //        }
-
-        //        // Validar que el libro existe
-        //        var libro = await _context.Libros.FindAsync(prestamoDto.LibroId);
-        //        if (libro == null)
-        //        {
-        //            return BadRequest(new { message = "El libro no existe" });
-        //        }
-
-        //        // Validar disponibilidad - verificar si el libro ya está prestado
-        //        var libroPrestado = await _context.Prestamos
-        //            .AnyAsync(p => p.IdLibro == prestamoDto.LibroId && p.Estado == "Activo");
-
-        //        if (libroPrestado)
-        //        {
-        //            return BadRequest(new { message = "El libro no está disponible (ya está prestado)" });
-        //        }
-
-        //        // Validar fechas
-        //        if (prestamoDto.FechaVencimiento <= prestamoDto.FechaPrestamo)
-        //        {
-        //            return BadRequest(new { message = "La fecha de vencimiento debe ser posterior a la fecha de préstamo" });
-        //        }
-
-        //        // Crear el préstamo
-        //        var prestamo = new Prestamo
-        //        {
-        //            IdLibro = prestamoDto.LibroId,
-        //            IdUsuario = prestamoDto.UsuarioId,
-        //            FechaPrestamo = prestamoDto.FechaPrestamo,
-        //            FechaDevolucionPrevista = prestamoDto.FechaVencimiento,
-        //            FechaDevolucionReal = null,
-        //            Renovaciones = 0,
-        //            Estado = "Activo"
-        //        };
-
-        //        // Guardar en la base de datos
-        //        _context.Prestamos.Add(prestamo);
-        //        await _context.SaveChangesAsync();
-
-        //        // Cargar datos relacionados
-        //        await _context.Entry(prestamo)
-        //            .Reference(p => p.IdUsuarioNavigation)
-        //            .LoadAsync();
-
-        //        await _context.Entry(prestamo)
-        //            .Reference(p => p.IdLibroNavigation)
-        //            .LoadAsync();
-
-        //        // Retornar respuesta
-        //        var response = new
-        //        {
-        //            Id = prestamo.IdPrestamo,
-        //            IdLibro = prestamo.IdLibro,
-        //            IdUsuario = prestamo.IdUsuario,
-        //            prestamo.FechaPrestamo,
-        //            FechaVencimiento = prestamo.FechaDevolucionPrevista,
-        //            LibroInfo = prestamo.IdLibroNavigation != null ?
-        //                $"{prestamo.IdLibroNavigation.Titulo} - {prestamo.IdLibroNavigation.Isbn}" : $"Libro {prestamo.IdLibro}",
-        //            UsuarioInfo = prestamo.IdUsuarioNavigation != null ?
-        //                $"{prestamo.IdUsuarioNavigation.Nombre} - {prestamo.IdUsuarioNavigation.Cedula}" : $"Usuario {prestamo.IdUsuario}",
-        //            prestamo.Estado
-        //        };
-
-        //        return CreatedAtAction(nameof(GetUltimoPrestamo), response);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, new { message = "Error al crear el préstamo", error = ex.Message });
-        //    }
-        //}
         [HttpPost]
         public async Task<ActionResult<Prestamo>> CreatePrestamo([FromBody] CrearPrestamoDto prestamoDto)
         {
             try
             {
-                // Obtener el ID del admin autenticado (solo para logging/auditoría si es necesario)
                 int adminAutenticadoId = AutorizacionService.ObtenerUsuarioAutenticadoId();
-                
                 if (adminAutenticadoId == 0)
                 {
                     return BadRequest(new { message = "No hay usuario autenticado. Por favor, inicie sesión." });
                 }
 
-                // Usar el UsuarioId del DTO (este es el LECTOR que recibirá el préstamo)
                 int usuarioLectorId = prestamoDto.UsuarioId;
-
-                // Validar que el usuario lector existe y está activo
                 var usuarioLector = await _context.Usuarios.FindAsync(usuarioLectorId);
                 if (usuarioLector == null)
                 {
@@ -177,14 +93,12 @@ namespace ApiBiblioteca.Controllers
                     return BadRequest(new { message = "El usuario lector no está activo" });
                 }
 
-                // Validar que el libro existe
                 var libro = await _context.Libros.FindAsync(prestamoDto.LibroId);
                 if (libro == null)
                 {
                     return BadRequest(new { message = "El libro no existe" });
                 }
 
-                // Validar disponibilidad - verificar si el libro ya está prestado
                 var libroPrestado = await _context.Prestamos
                     .AnyAsync(p => p.IdLibro == prestamoDto.LibroId && p.Estado == "Activo");
 
@@ -193,17 +107,15 @@ namespace ApiBiblioteca.Controllers
                     return BadRequest(new { message = "El libro no está disponible (ya está prestado)" });
                 }
 
-                // Validar fechas
                 if (prestamoDto.FechaVencimiento <= prestamoDto.FechaPrestamo)
                 {
                     return BadRequest(new { message = "La fecha de vencimiento debe ser posterior a la fecha de préstamo" });
                 }
 
-                // Crear el préstamo CON EL USUARIO LECTOR (NO el admin)
                 var prestamo = new Prestamo
                 {
                     IdLibro = prestamoDto.LibroId,
-                    IdUsuario = usuarioLectorId, // ← USAR EL LECTOR, no el admin
+                    IdUsuario = usuarioLectorId,
                     FechaPrestamo = prestamoDto.FechaPrestamo,
                     FechaDevolucionPrevista = prestamoDto.FechaVencimiento,
                     FechaDevolucionReal = null,
@@ -211,25 +123,17 @@ namespace ApiBiblioteca.Controllers
                     Estado = "Activo"
                 };
 
-                // Guardar en la base de datos
                 _context.Prestamos.Add(prestamo);
                 await _context.SaveChangesAsync();
 
-                // Cargar datos relacionados
-                await _context.Entry(prestamo)
-                    .Reference(p => p.IdUsuarioNavigation)
-                    .LoadAsync();
+                await _context.Entry(prestamo).Reference(p => p.IdUsuarioNavigation).LoadAsync();
+                await _context.Entry(prestamo).Reference(p => p.IdLibroNavigation).LoadAsync();
 
-                await _context.Entry(prestamo)
-                    .Reference(p => p.IdLibroNavigation)
-                    .LoadAsync();
-
-                // Retornar respuesta
                 var response = new
                 {
                     Id = prestamo.IdPrestamo,
                     IdLibro = prestamo.IdLibro,
-                    IdUsuario = prestamo.IdUsuario, // Este ahora será el lector
+                    IdUsuario = prestamo.IdUsuario,
                     prestamo.FechaPrestamo,
                     FechaVencimiento = prestamo.FechaDevolucionPrevista,
                     LibroInfo = prestamo.IdLibroNavigation != null ?
@@ -237,7 +141,7 @@ namespace ApiBiblioteca.Controllers
                     UsuarioInfo = prestamo.IdUsuarioNavigation != null ?
                         $"{prestamo.IdUsuarioNavigation.Nombre} - {prestamo.IdUsuarioNavigation.Cedula}" : $"Usuario {prestamo.IdUsuario}",
                     prestamo.Estado,
-                    CreadoPorAdmin = adminAutenticadoId // Opcional: para saber qué admin lo creó
+                    CreadoPorAdmin = adminAutenticadoId
                 };
 
                 return CreatedAtAction(nameof(GetUltimoPrestamo), response);
@@ -249,8 +153,61 @@ namespace ApiBiblioteca.Controllers
         }
 
         //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        // NUEVO: Actualizar solo la fecha de devolución prevista manteniendo el préstamo activo
+        [HttpPut("fecha-vencimiento/{idPrestamo}")]
+        public async Task<ActionResult<object>> ActualizarFechaVencimiento(int idPrestamo,[FromBody] ActualizarFechaVencimientoDto dto)
+        {
+            try
+            {
+                var prestamo = await _context.Prestamos.FirstOrDefaultAsync(p => p.IdPrestamo == idPrestamo);
 
+                if (prestamo == null)
+                {
+                    return NotFound(new { message = "Préstamo no encontrado" });
+                }
 
+                if (!string.Equals(prestamo.Estado?.Trim(), "Activo", StringComparison.OrdinalIgnoreCase))
+                {
+                    return BadRequest(new { message = "Solo se puede actualizar la fecha de préstamos activos" });
+                }
+
+                if (dto == null || dto.FechaVencimiento == default)
+                {
+                    return BadRequest(new { message = "Fecha de vencimiento inválida" });
+                }
+
+                if (dto.FechaVencimiento <= prestamo.FechaDevolucionPrevista)
+                {
+                    return BadRequest(new { message = "La nueva fecha debe ser posterior a la fecha vigente" });
+                }
+
+                if (dto.FechaVencimiento <= prestamo.FechaPrestamo)
+                {
+                    return BadRequest(new { message = "La nueva fecha debe ser posterior a la fecha de préstamo" });
+                }
+
+                var fechaAnterior = prestamo.FechaDevolucionPrevista;
+                prestamo.FechaDevolucionPrevista = dto.FechaVencimiento;
+                prestamo.Renovaciones = prestamo.Renovaciones + 1;
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    prestamo.IdPrestamo,
+                    FechaAnterior = fechaAnterior,
+                    NuevaFechaVencimiento = prestamo.FechaDevolucionPrevista,
+                    prestamo.Renovaciones,
+                    prestamo.Estado
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error al actualizar la fecha de vencimiento", error = ex.Message });
+            }
+        }
+
+        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         // Usuarios Activos
         [HttpGet("usuarios/activos")]
         public async Task<ActionResult<IEnumerable<object>>> GetUsuariosActivos()
@@ -258,7 +215,7 @@ namespace ApiBiblioteca.Controllers
             try
             {
                 var usuarios = await _context.Usuarios
-                    .Where(u => u.Estado == "Activo") // Usar Estado en lugar de Activo
+                    .Where(u => u.Estado == "Activo")
                     .Select(u => new
                     {
                         Id = u.IdUsuario,
@@ -277,21 +234,18 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
-//------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         // Libros disponibles
         [HttpGet("libros/disponibles")]
         public async Task<ActionResult<IEnumerable<object>>> GetLibrosDisponibles()
         {
             try
             {
-                // Obtener IDs de libros que están prestados actualmente
                 var librosPrestados = await _context.Prestamos
                     .Where(p => p.Estado == "Activo")
                     .Select(p => p.IdLibro)
                     .ToListAsync();
 
-                // Libros que NO están en la lista de prestados y tienen estado activo
                 var libros = await _context.Libros
                     .Where(l => !librosPrestados.Contains(l.IdLibro) && l.Estado == "Activo")
                     .Select(l => new
@@ -312,10 +266,7 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        
-        
+        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         // Lista prestamos
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetPrestamos()
@@ -351,16 +302,13 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         // Devolución de libros
         [HttpPut("devolucion/{idPrestamo}")]
         public async Task<ActionResult<object>> RegistrarDevolucion(int idPrestamo)
         {
             try
             {
-                // Buscar el préstamo
                 var prestamo = await _context.Prestamos
                     .Include(p => p.IdLibroNavigation)
                     .Include(p => p.IdUsuarioNavigation)
@@ -371,15 +319,11 @@ namespace ApiBiblioteca.Controllers
                     return NotFound(new { message = "Préstamo no encontrado o ya devuelto" });
                 }
 
-                // Actualizar el préstamo
                 prestamo.FechaDevolucionReal = DateTime.Now;
                 prestamo.Estado = "Devuelto";
 
-                // Marcar el libro como disponible (aunque no tenemos propiedad disponible, el libro estará disponible automáticamente al no tener préstamos activos)
-
                 await _context.SaveChangesAsync();
 
-                // Retornar respuesta
                 var response = new
                 {
                     prestamo.IdPrestamo,
@@ -397,8 +341,7 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
-//------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         // Muestra los préstamos activos
         [HttpGet("activos")]
         public async Task<ActionResult<IEnumerable<object>>> GetPrestamosActivos()
@@ -408,7 +351,7 @@ namespace ApiBiblioteca.Controllers
                 var prestamos = await _context.Prestamos
                     .Include(p => p.IdUsuarioNavigation)
                     .Include(p => p.IdLibroNavigation)
-                    .Where(p => p.Estado == "Activo")
+                    .Where(p => p.Estado == "Activo")       
                     .OrderByDescending(p => p.FechaPrestamo)
                     .Select(p => new
                     {
@@ -434,7 +377,6 @@ namespace ApiBiblioteca.Controllers
                 return StatusCode(500, new { message = "Error al cargar préstamos activos", error = ex.Message });
             }
         }
-
 
     }//fin del public
 }//fin del namespace
