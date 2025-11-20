@@ -22,32 +22,10 @@ namespace ApiBiblioteca.Controllers
 
         }
 
-        //// GET: api/Reservas - Lista todas las reservas
-        //[HttpGet("ListaReservas")]
-        //public async Task<ActionResult<IEnumerable<ReservaResponseDto>>> GetReservas()
-        //{
-        //    var reservas = await _context.Reservas
-        //        .Include(r => r.IdLibroNavigation)      // Incluir datos del libro
-        //        .Include(r => r.IdUsuarioNavigation)    // Incluir datos del usuario
-        //        .Select(r => new ReservaResponseDto
-        //        {
-        //            IdReserva = r.IdReserva,
-        //            IdUsuario = r.IdUsuario,
-        //            IdLibro = r.IdLibro,
-        //            FechaReserva = r.FechaReserva,
-        //            Prioridad = r.Prioridad,
-        //            Estado = r.Estado,
-        //            TituloLibro = r.IdLibroNavigation.Titulo,
-        //            NombreUsuario = r.IdUsuarioNavigation.Nombre,
-        //            Isbn = r.IdLibroNavigation.Isbn
-        //        })
-        //        .ToListAsync();
-
-        //    return Ok(reservas);
-        //}
-
         [HttpGet("ListaReservas")]
-        public async Task<ActionResult<IEnumerable<ReservaResponseDto>>> GetReservas([FromQuery] int? userId = null)
+        public async Task<ActionResult<IEnumerable<ReservaResponseDto>>> GetReservas(
+            [FromQuery] int? userId = null,
+            [FromQuery] string? estado = null) // PARÁMETRO PARA FILTRAR POR ESTADO
         {
             var query = _context.Reservas
                 .Include(r => r.IdLibroNavigation)
@@ -60,8 +38,18 @@ namespace ApiBiblioteca.Controllers
                 query = query.Where(r => r.IdUsuario == userId.Value);
             }
 
-            // Filtrar solo reservas activas (no canceladas)
-            //query = query.Where(r => r.Estado == "Activa");
+            // FILTRAR POR ESTADO
+            if (!string.IsNullOrEmpty(estado))
+            {
+                if (estado == "Activa")
+                {
+                    query = query.Where(r => r.Estado == "Activa");
+                }
+                else if (estado == "NoActiva")
+                {
+                    query = query.Where(r => r.Estado != "Activa"); // Todas las que NO son activas
+                }
+            }
 
             var reservas = await query
                 .Select(r => new ReservaResponseDto
@@ -81,11 +69,10 @@ namespace ApiBiblioteca.Controllers
             return Ok(reservas);
         }
 
-        // Lista reservas
+        //Este era el metodo que servia
         //[HttpGet("ListaReservas")]
         //public async Task<ActionResult<IEnumerable<ReservaResponseDto>>> GetReservas([FromQuery] int? userId = null)
         //{
-        //    //  consulta base
         //    var query = _context.Reservas
         //        .Include(r => r.IdLibroNavigation)
         //        .Include(r => r.IdUsuarioNavigation)
@@ -97,7 +84,9 @@ namespace ApiBiblioteca.Controllers
         //        query = query.Where(r => r.IdUsuario == userId.Value);
         //    }
 
-        //    // EJECUTAR la consulta
+        //    // Filtrar solo reservas activas (no canceladas)
+        //    //query = query.Where(r => r.Estado == "Activa");
+
         //    var reservas = await query
         //        .Select(r => new ReservaResponseDto
         //        {
