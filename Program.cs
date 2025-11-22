@@ -77,6 +77,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// Configurar Authorization por roles
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("LectorPolicy", policy => policy.RequireRole("Lector"));
+    options.AddPolicy("SupervisorOnly", policy => policy.RequireRole("Supervisor"));
+});
+
+
 // Registrar el servicio de autorización
 builder.Services.AddScoped<IAutorizacionService, AutorizacionService>();
 builder.Services.AddScoped<ILibroImportService, LibroImportService>();

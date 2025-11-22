@@ -1,6 +1,7 @@
 ﻿using ApiBiblioteca.Models;
 using ApiBiblioteca.Models.Dtos;
 using ApiBiblioteca.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +9,7 @@ namespace ApiBiblioteca.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    
     public class SeccionController : Controller
     {
         private readonly DbContextBiblioteca _context;
@@ -148,6 +150,7 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("Registro")]
         public async Task<ActionResult<ApiResponse>> Registro([FromBody] SeccionDto registro)
         {

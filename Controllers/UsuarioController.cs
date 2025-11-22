@@ -1,6 +1,7 @@
 ﻿using ApiBiblioteca.Models;
 using ApiBiblioteca.Models.Dtos;
 using ApiBiblioteca.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -290,6 +291,7 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
+        [Authorize (Roles = "Admin")]
         [HttpPut("Editar")]
         public async Task<IActionResult> EditarUsuario([FromBody] EditarUsuarioDto editarDto)
         {
