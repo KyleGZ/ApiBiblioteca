@@ -27,7 +27,7 @@ namespace ApiBiblioteca.Services
                     Asunto = model.Asunto,
                     Mensaje = model.Mensaje,
                     FechaEnvio = DateTime.Now,
-                    Estado = "No Leída"
+                    Estado = "No leída"
                 };
 
                 _context.Notificacions.Add(notificacion);
@@ -109,7 +109,7 @@ namespace ApiBiblioteca.Services
                         Asunto = asunto,
                         Mensaje = mensaje,
                         FechaEnvio = DateTime.Now,
-                        Estado = "No Leída"
+                        Estado = "No leída"
                     };
                     _context.Notificacions.Add(noti);
 
@@ -220,7 +220,7 @@ namespace ApiBiblioteca.Services
                         Asunto = "Tu reserva ha expirado",
                         Mensaje = $"Tu reserva del libro '{libro?.Titulo}' ha expirado por falta de confirmación.",
                         FechaEnvio = DateTime.Now,
-                        Estado = "No Leída"
+                        Estado = "No leída"
                     });
                 }
 

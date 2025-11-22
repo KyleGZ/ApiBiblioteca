@@ -125,7 +125,7 @@ namespace ApiBiblioteca.Controllers
                 }
 
                 var notificaciones = await _context.Notificacions
-                    .Where(n => n.IdUsuario == idUsuario && n.Estado == "No leida")
+                    .Where(n => n.IdUsuario == idUsuario && n.Estado == "No leída")
                     .ToListAsync();
 
                 if (!notificaciones.Any())
@@ -162,6 +162,57 @@ namespace ApiBiblioteca.Controllers
                 });
             }
         }
+
+        //*Metodo para eliminar notificaciones antiguas
+
+        [HttpDelete("EliminarTodas")]
+        public async Task<ActionResult<ApiResponse>> EliminarTodas(int idUsuario)
+        {
+            try
+            {
+                if (idUsuario <= 0)
+                {
+                    return BadRequest(new ApiResponse
+                    {
+                        Success = false,
+                        Message = "El ID de usuario no es válido."
+                    });
+                }
+
+                // Buscar todas las notificaciones del usuario
+                var notificaciones = await _context.Notificacions
+                    .Where(n => n.IdUsuario == idUsuario)
+                    .ToListAsync();
+
+                if (!notificaciones.Any())
+                {
+                    return Ok(new ApiResponse
+                    {
+                        Success = true,
+                        Message = "No hay notificaciones para eliminar."
+                    });
+                }
+
+                // Eliminar todas
+                _context.Notificacions.RemoveRange(notificaciones);
+                await _context.SaveChangesAsync();
+
+                return Ok(new ApiResponse
+                {
+                    Success = true,
+                    Message = "Todas las notificaciones fueron eliminadas correctamente."
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ApiResponse
+                {
+                    Success = false,
+                    Message = $"Error interno en el servidor: {ex.Message}"
+                });
+            }
+        }
+
 
 
     }
