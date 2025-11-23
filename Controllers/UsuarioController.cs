@@ -25,12 +25,13 @@ namespace ApiBiblioteca.Controllers
             _logger = logger;
         }
 
+        [Authorize(Policy = "StaffOnly")]
         [HttpGet("ListaUsuarios")]
-
         public async Task<ActionResult<IEnumerable<Usuario>>> ListaUsuarios() { 
         return await _context.Usuarios.ToListAsync();
         }
 
+        [Authorize(Policy = "StaffOnly")]
         [HttpGet("Listar")]
         public async Task<IActionResult> ListarUsuarios()
         {
@@ -126,7 +127,7 @@ namespace ApiBiblioteca.Controllers
             return Ok(response);
         }
 
-
+        [Authorize(Policy = "StaffOnly")]
         [HttpGet("Busqueda-Usuario")]
         public async Task<ActionResult<PaginacionResponse<UsuarioListaDto>>> BusquedaUsuario(string termino, int pagina = 1, int resultadoPorPagina = 20)
         {
@@ -226,8 +227,8 @@ namespace ApiBiblioteca.Controllers
         }
 
 
+        [Authorize(Policy = "StaffOnly")]
         [HttpPost("Registro")]
-
         public async Task<IActionResult> Registror([FromBody] UsuarioDto registro)
         {
             try
@@ -291,7 +292,7 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
-        [Authorize (Roles = "Admin")]
+        [Authorize(Policy = "StaffOnly")]
         [HttpPut("Editar")]
         public async Task<IActionResult> EditarUsuario([FromBody] EditarUsuarioDto editarDto)
         {
@@ -374,6 +375,7 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
+        [Authorize(Policy = "AdminOnly")]
         [HttpDelete("Desactivar")]
         public async Task<IActionResult> DesactivarUsuario(int id)
         {
@@ -401,6 +403,7 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
+        [Authorize(Policy = "AdminOnly")]
         [HttpPatch("Activar")]
         public async Task<IActionResult> ActivarUsuario(int id)
         {

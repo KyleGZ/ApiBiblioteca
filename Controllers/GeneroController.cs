@@ -1,6 +1,7 @@
 ﻿using ApiBiblioteca.Models;
 using ApiBiblioteca.Models.Dtos;
 using ApiBiblioteca.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,7 +23,6 @@ namespace ApiBiblioteca.Controllers
         }
 
         [HttpGet("Lista-Generos")]
-
         public async Task<ActionResult<List<GeneroDto>>> ListaGeneros(string? nombre)
         {
             try
@@ -148,6 +148,7 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
+        [Authorize(Policy = ("StaffOnly"))]
         [HttpPost("Registro")]
         public async Task<ActionResult<ApiResponse>> Registro([FromBody] GeneroDto registro)
         {
@@ -188,6 +189,7 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
+        [Authorize(Policy = ("StaffOnly"))]
         [HttpPut("Editar")]
         public async Task<ActionResult<ApiResponse>> Editar([FromBody] GeneroDto editar)
         {
@@ -240,6 +242,7 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
+        [Authorize(Policy = ("StaffOnly"))]
         [HttpDelete("Eliminar")]
         public async Task<ActionResult<ApiResponse>> Eliminar(int id)
         {

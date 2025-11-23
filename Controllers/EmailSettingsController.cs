@@ -1,6 +1,7 @@
 ﻿using ApiBiblioteca.Models.Dtos;
 using ApiBiblioteca.Services;
 using ApiBiblioteca.Settings;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
@@ -23,6 +24,7 @@ namespace ApiBiblioteca.Controllers
         /// <summary>
         /// Obtiene la configuración de correo electrónico actual.
 
+        [Authorize(Policy = "AdminOnly")]
         [HttpGet("GetSettings")]
         public async Task<ActionResult<EmailSettings>> GetSettings()
         {
@@ -32,6 +34,7 @@ namespace ApiBiblioteca.Controllers
 
         /// <summary>
         /// Actualiza la configuración de correo electrónico.
+        [Authorize(Policy = "AdminOnly")]
         [HttpPut("UpdateSettings")]
         public async Task<IActionResult> UpdateSettings([FromBody] UpdateEmailSettings settings)
         {
@@ -55,6 +58,7 @@ namespace ApiBiblioteca.Controllers
         }
         /// <summary>
         /// Prueba la conexión SMTP usando la configuración actual.
+        [Authorize(Policy = "AdminOnly")]
         [HttpGet("TestConnection")]
         public async Task<IActionResult> TestConnection()
         {

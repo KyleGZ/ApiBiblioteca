@@ -1,6 +1,7 @@
 ﻿using ApiBiblioteca.Models;
 using ApiBiblioteca.Models.Dtos;
 using ApiBiblioteca.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -166,6 +167,7 @@ namespace ApiBiblioteca.Controllers
         }
 
         // POST /Editorial/Registro
+        [Authorize(Policy = "StaffOnly")]
         [HttpPost("Registro")]
         public async Task<ActionResult<ApiResponse>> Registro([FromBody] EditorialDto registro)
         {
@@ -218,6 +220,7 @@ namespace ApiBiblioteca.Controllers
         }
 
         // PUT /Editorial/Editar
+        [Authorize(Policy = "StaffOnly")]
         [HttpPut("Editar")]
         public async Task<ActionResult<ApiResponse>> EditarEditorial([FromBody] EditorialDto editarDto)
         {
@@ -284,6 +287,7 @@ namespace ApiBiblioteca.Controllers
         }
 
         // DELETE /Editorial/Eliminar?id=5
+        [Authorize(Policy = "StaffOnly")]
         [HttpDelete("Eliminar")]
         public async Task<ActionResult<ApiResponse>> EliminarEditorial(int id)
         {

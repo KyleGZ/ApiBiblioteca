@@ -84,6 +84,10 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
     options.AddPolicy("LectorPolicy", policy => policy.RequireRole("Lector"));
     options.AddPolicy("SupervisorOnly", policy => policy.RequireRole("Supervisor"));
+
+    // Policy para Staff (Admin + Supervisor)
+    options.AddPolicy("StaffOnly", policy =>
+        policy.RequireRole("Admin", "Supervisor"));
 });
 
 

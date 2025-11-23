@@ -21,7 +21,6 @@ namespace ApiBiblioteca.Controllers
         }
 
         [HttpGet("Lista-Secciones")]
-
         public async Task<ActionResult<List<GeneroDto>>> ListaSecciones(string? nombre)
         {
             try
@@ -49,7 +48,6 @@ namespace ApiBiblioteca.Controllers
         }
 
         // ========= NUEVOS (ApiResponse no genérico) =========
-
         [HttpGet("ListarViewSeccion")]
         public async Task<ActionResult<ApiResponse>> ListarViewSeccion(int pagina = 1, int resultadoPorPagina = 20)
         {
@@ -150,7 +148,7 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "StaffOnly")]
         [HttpPost("Registro")]
         public async Task<ActionResult<ApiResponse>> Registro([FromBody] SeccionDto registro)
         {
@@ -192,6 +190,7 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
+        [Authorize(Policy = "StaffOnly")]
         [HttpPut("Editar")]
         public async Task<ActionResult<ApiResponse>> Editar([FromBody] SeccionDto editar)
         {
@@ -244,6 +243,7 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
+        [Authorize(Policy = "StaffOnly")]
         [HttpDelete("Eliminar")]
         public async Task<ActionResult<ApiResponse>> Eliminar(int id)
         {
