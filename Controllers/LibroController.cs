@@ -1,6 +1,7 @@
 ﻿using ApiBiblioteca.Models;
 using ApiBiblioteca.Models.Dtos;
 using ApiBiblioteca.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -23,7 +24,7 @@ namespace ApiBiblioteca.Controllers
             _libroImportService = libroImportService;
         }
 
-
+        [Authorize(Policy = "GeneralPolicy")]
         [HttpGet("ListaView")]
         public async Task<PaginacionResponse<LibroListaView>> ListaView(int pagina = 1, int resultadosPorPagina = 20)
         {
@@ -115,7 +116,7 @@ namespace ApiBiblioteca.Controllers
         /*
          * Metodo para realizar busquedas por descripcion
          */
-
+        [Authorize(Policy = "GeneralPolicy")]
         [HttpGet("Busqueda-Descripcion")]
         public async Task<PaginacionResponse<LibroListaView>> BuscarPorDescripcionAsync(
     string terminoBusqueda,
@@ -184,7 +185,7 @@ namespace ApiBiblioteca.Controllers
             return response;
         }
 
-
+        [Authorize(Policy = "GeneralPolicy")]
         [HttpGet("buscar-rapida")]
         public async Task<ActionResult<PaginacionResponse<LibroListaView>>> BuscarRapida(
     string termino,
@@ -385,7 +386,7 @@ namespace ApiBiblioteca.Controllers
         /*
          * Metodo para registrar nuevos libros
          */
-
+        [Authorize(Policy = "StaffOnly")]
         [HttpPost("Registro-Libro")]
         public async Task<ActionResult<ApiResponse>> Registro([FromBody] CrearLibroDto libroDto)
         {
@@ -472,6 +473,7 @@ namespace ApiBiblioteca.Controllers
         /*
          * Metodo para editar un libro
          */
+        [Authorize(Policy = "StaffOnly")]
         [HttpPut("Editar-Libro")]
         public async Task<ActionResult<ApiResponse>> EditarLibro(int idLibro, [FromBody] CrearLibroDto editarLibroDto)
         {
@@ -575,7 +577,7 @@ namespace ApiBiblioteca.Controllers
         /*
          * Este metodo retorna un libro con la informacion lista para actualizarse
          */
-
+        [Authorize(Policy = "StaffOnly")]
         [HttpGet("ObtenerLibro-Editar")]
         public async Task<ActionResult<ApiResponse>> ObtenerLibroParaEditar(int idLibro)
         {
@@ -636,7 +638,7 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
-
+        [Authorize(Policy = "StaffOnly")]
         [HttpGet("buscar-editorial")]
         public async Task<ActionResult<ApiResponse>> BuscarEditorial(string nombre)
         {
@@ -672,6 +674,7 @@ namespace ApiBiblioteca.Controllers
         /*
          * Metodo para obtener los detalles de un libro
          */
+        [Authorize(Policy = "GeneralPolicy")]
         [HttpGet("Detalle-Libro")]
         public async Task<ActionResult<LibroDetalleDto>> DetalleLibro(int idLibro)
         {
@@ -712,6 +715,7 @@ namespace ApiBiblioteca.Controllers
         /*
          * Metodo para obtener la plantilla de importacion de libros
          */
+        [Authorize(Policy = "StaffOnly")]
         [HttpGet("Plantilla-Importacion")]
         public async Task<IActionResult> DescargarPlantilla()
         {
@@ -727,6 +731,7 @@ namespace ApiBiblioteca.Controllers
         /*
          * Metodo para importar libros desde un archivo Excel
          */
+        [Authorize(Policy = "StaffOnly")]
         [HttpPost("Importar-Libro")]
         public async Task<IActionResult> ImportarLibros(IFormFile archivo)
         {
