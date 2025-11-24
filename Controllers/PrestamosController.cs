@@ -114,6 +114,9 @@ namespace ApiBiblioteca.Controllers
                     return BadRequest(new { message = "La fecha de vencimiento debe ser posterior a la fecha de préstamo" });
                 }
 
+                // ✅ ACTUALIZAR ESTADO DEL LIBRO
+                libro.Estado = "Prestado";
+
                 var prestamo = new Prestamo
                 {
                     IdLibro = prestamoDto.LibroId,
@@ -323,6 +326,12 @@ namespace ApiBiblioteca.Controllers
 
                 prestamo.FechaDevolucionReal = DateTime.Now;
                 prestamo.Estado = "Devuelto";
+                
+                
+                if (prestamo.IdLibroNavigation != null)
+                {
+                    prestamo.IdLibroNavigation.Estado = "Disponible"; // o "Disponible"
+                }
 
                 await _context.SaveChangesAsync();
 
@@ -428,7 +437,46 @@ namespace ApiBiblioteca.Controllers
                 return StatusCode(500, $"Error al generar reporte: {ex.Message}");
             }
         }
+        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        // Buscar préstamos por usuario, libro o ISBN
+        [HttpGet("buscar")]
+        public async Task<ActionResult<IEnumerable<object>>> BuscarPrestamos(string termino)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(termino)) { return BadRequest(new { message = "Debe proporcionar un término de búsqueda" }); }
+                termino = termino.Trim().ToLower();
 
+                var resultados = await _context.Prestamos
+                    .Include(p => p.IdUsuarioNavigation)
+                    .Include(p => p.IdLibroNavigation)
+                    .Where(p =>
+                        (p.IdUsuarioNavigation != null && p.IdUsuarioNavigation.Nombre.ToLower().Contains(termino)) ||
+                        (p.IdLibroNavigation != null && p.IdLibroNavigation.Titulo.ToLower().Contains(termino)) ||
+                        (p.IdLibroNavigation != null && p.IdLibroNavigation.Isbn.ToLower().Contains(termino))
+                    )
+                    .OrderByDescending(p => p.FechaPrestamo)
+                    .Select(p => new
+                    {
+                        p.IdPrestamo,
+                        UsuarioNombre = p.IdUsuarioNavigation != null ? p.IdUsuarioNavigation.Nombre : "N/A",
+                        LibroTitulo = p.IdLibroNavigation != null ? p.IdLibroNavigation.Titulo : "N/A",
+                        LibroIsbn = p.IdLibroNavigation != null ? p.IdLibroNavigation.Isbn : "N/A",
+                        p.FechaPrestamo,
+                        FechaVencimiento = p.FechaDevolucionPrevista,
+                        p.Estado,
+                        EstadoLibro = p.IdLibroNavigation != null ? p.IdLibroNavigation.Estado : "N/A"
+                    })
+                    .ToListAsync();
+
+                return Ok(resultados);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al buscar préstamos: {ex.Message}" });
+            }
+        }
+    
 
     }//fin del public
 }//fin del namespace
