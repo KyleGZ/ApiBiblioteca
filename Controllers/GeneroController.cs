@@ -21,8 +21,8 @@ namespace ApiBiblioteca.Controllers
             _autorizacionService = autorizacionService;
             _context = dbContext;
         }
+        [Authorize(Policy = "StaffOnly")]
 
-        [Authorize(Policy = "GeneralPolicy")]
         [HttpGet("Lista-Generos")]
         public async Task<ActionResult<List<GeneroDto>>> ListaGeneros(string? nombre)
         {
@@ -51,7 +51,8 @@ namespace ApiBiblioteca.Controllers
         }
 
         // ========= NUEVOS (ApiResponse no genérico) =========
-        [Authorize(Policy = "GeneralPolicy")]
+        [Authorize(Policy = "StaffOnly")]
+
         [HttpGet("ListarViewGenero")]
         public async Task<ActionResult<ApiResponse>> ListarViewGenero(int pagina = 1, int resultadoPorPagina = 20)
         {
@@ -100,7 +101,8 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
-        [Authorize(Policy = "GeneralPolicy")]
+        [Authorize(Policy = "StaffOnly")]
+
         [HttpGet("Busqueda-Genero")]
         public async Task<ActionResult<ApiResponse>> BusquedaGenero(string termino, int pagina = 1, int resultadoPorPagina = 20)
         {

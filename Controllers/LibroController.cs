@@ -79,39 +79,6 @@ namespace ApiBiblioteca.Controllers
             return response;
         }
 
-        //[HttpGet("ListaView")]
-        //public async Task<ActionResult<List<LibroListaView>>> ListaView()
-        //{
-        //    try
-        //    {
-        //        var libros = await _context.Libros
-        //            .Include(l => l.IdEditorialNavigation) // Editorial
-        //            .Include(l => l.IdAutors)              // Autores (N:N)
-        //            .Include(l => l.IdGeneros)             // Géneros (N:N)
-        //            .Select(l => new LibroListaView
-        //            {
-        //                IdLibro = l.IdLibro,
-        //                Titulo = l.Titulo,
-        //                ISBN = l.Isbn,
-        //                Editorial = l.IdEditorialNavigation.Nombre,
-        //                Autor = l.IdAutors.Select(a => a.Nombre).ToList(),
-        //                Genero = l.IdGeneros.Select(g => g.Nombre).ToList(),
-        //                Estado = l.Estado,
-        //                PortadaUrl = l.PortadaUrl
-        //            })
-        //            .ToListAsync();
-
-        //        if (libros == null || !libros.Any())
-        //            return Ok(new List<LibroListaView>());
-
-        //        return Ok(libros);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine($"Error al obtener libros: {ex.Message}");
-        //        return StatusCode(500, new { error = "Error interno del servidor" });
-        //    }
-        //}
 
 
         /*

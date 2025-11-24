@@ -1,5 +1,6 @@
 ﻿using ApiBiblioteca.Models;
 using ApiBiblioteca.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +18,7 @@ namespace ApiBiblioteca.Controllers
             _context = context;
             _autorizacionService = autorizacionService;
         }
+        [Authorize(Policy = "StaffOnly")]
 
         [HttpGet("ObtenerRoles")]
         public async Task<ActionResult<IEnumerable<object>>> GetRoles()
@@ -28,6 +30,7 @@ namespace ApiBiblioteca.Controllers
 
             return Ok(roles);
         }
+        [Authorize(Policy = "StaffOnly")]
 
         [HttpGet("ObtenerRolesDeUsuario/{idUsuario}")]
         public async Task<IActionResult> ObtenerRolesDeUsuario(int idUsuario)
@@ -48,6 +51,7 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
+        [Authorize(Policy = "StaffOnly")]
 
         [HttpPost("AsignarRolAUsuario")]
         public async Task<IActionResult> AsignarRolAUsuario(int idUsuario, int idRol)
@@ -76,6 +80,7 @@ namespace ApiBiblioteca.Controllers
 
             return Ok(new { mensaje = $"Rol {rol.NombreRol} asignado correctamente al usuario {usuario.Nombre}." });
         }
+        [Authorize(Policy = "StaffOnly")]
 
         [HttpPost("QuitarRolAUsuario")]
         public async Task<IActionResult> QuitarRolAUsuario(int idUsuario, int idRol)

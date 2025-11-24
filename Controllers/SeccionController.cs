@@ -19,6 +19,7 @@ namespace ApiBiblioteca.Controllers
             _autorizacionService = autorizacionService;
             _context = dbContext;
         }
+        [Authorize(Policy = "StaffOnly")]
 
         [HttpGet("Lista-Secciones")]
         public async Task<ActionResult<List<GeneroDto>>> ListaSecciones(string? nombre)
@@ -46,6 +47,8 @@ namespace ApiBiblioteca.Controllers
                 return StatusCode(500, new { error = "Error interno del servidor al obtener secciones" });
             }
         }
+
+        [Authorize(Policy = "StaffOnly")]
 
         // ========= NUEVOS (ApiResponse no genérico) =========
         [HttpGet("ListarViewSeccion")]
@@ -95,6 +98,8 @@ namespace ApiBiblioteca.Controllers
                 return StatusCode(500, api);
             }
         }
+        [Authorize(Policy = "StaffOnly")]
+
 
         [HttpGet("Busqueda-Seccion")]
         public async Task<ActionResult<ApiResponse>> BusquedaSeccion(string termino, int pagina = 1, int resultadoPorPagina = 20)
@@ -283,7 +288,8 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
-        [Authorize(Policy = "GeneralPolicy")]
+        [Authorize(Policy = "StaffOnly")]
+
         [HttpGet("Get-seccion")]
         public async Task<ActionResult<int>> GetSeccion(string nombre)
         {

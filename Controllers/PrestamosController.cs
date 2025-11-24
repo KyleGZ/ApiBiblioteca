@@ -12,6 +12,7 @@ namespace ApiBiblioteca.Controllers
     {
         public DateTime FechaVencimiento { get; set; }
     }
+    [Authorize(Policy = "StaffOnly")] // Solo Admin y Supervisor pueden acceder)]
 
     [ApiController]
     [Route("api/[controller]")]
@@ -252,7 +253,7 @@ namespace ApiBiblioteca.Controllers
                     .ToListAsync();
 
                 var libros = await _context.Libros
-                    .Where(l => !librosPrestados.Contains(l.IdLibro) && l.Estado == "Activo")
+                    .Where(l => !librosPrestados.Contains(l.IdLibro) && l.Estado.ToLower() == "disponible")
                     .Select(l => new
                     {
                         Id = l.IdLibro,

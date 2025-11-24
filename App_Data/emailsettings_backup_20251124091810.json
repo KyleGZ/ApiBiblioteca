@@ -1,0 +1,9 @@
+{
+  "FromName": "Biblioteca Esparza",
+  "FromEmail": "beachsaresort@gmail.com",
+  "SmtpHost": "smtp.gmail.com",
+  "SmtpPort": 587,
+  "UseStartTls": true,
+  "Username": "beachsaresort@gmail.co",
+  "Password": "HOLHNjYprt6U6TL2RAzwsC8oi7UYzLLb/wN2UHemOmzSd1uROAxJQs8bVLq\u002B08IE"
+}

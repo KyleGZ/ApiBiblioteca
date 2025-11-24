@@ -1,6 +1,8 @@
 ﻿using ApiBiblioteca.Models.Dtos;
 using ApiBiblioteca.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Runtime.InteropServices;
 
 namespace ApiBiblioteca.Controllers
 {
@@ -16,7 +18,7 @@ namespace ApiBiblioteca.Controllers
         {
             _bitacoraService = bitacora;
         }
-
+        [Authorize(Policy = "GeneralPolicy")]
         [HttpPost("RegistrarAccion")]
         public async Task<IActionResult> RegistrarAccion([FromBody] BitacoraRequest request)
         {

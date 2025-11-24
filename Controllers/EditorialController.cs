@@ -20,6 +20,7 @@ namespace ApiBiblioteca.Controllers
             _context = dbContext;
         }
 
+        [Authorize(Policy = "StaffOnly")]
 
         [HttpGet("Lista-Editoriales")]
 
@@ -48,6 +49,7 @@ namespace ApiBiblioteca.Controllers
                 return StatusCode(500, new { error = "Error interno del servidor al obtener editoriales" });
             }
         }
+        [Authorize(Policy = "StaffOnly")]
 
         // GET /Editorial/Busqueda-Editorial?termino=plan&pagina=1&resultadoPorPagina=20
         [HttpGet("Busqueda-Editorial")]
@@ -111,6 +113,8 @@ namespace ApiBiblioteca.Controllers
                 return StatusCode(500, api);
             }
         }
+
+        [Authorize(Policy = "StaffOnly")]
 
         // GET /Editorial/ListarViewEditorial?pagina=1&resultadoPorPagina=20
         [HttpGet("ListarViewEditorial")]

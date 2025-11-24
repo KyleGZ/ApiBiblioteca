@@ -69,6 +69,7 @@ namespace ApiBiblioteca.Controllers
           * 
           *     // Metodo para listar los usuarios con paginacion
           */
+        [Authorize(Policy = "StaffOnly")]
 
         [HttpGet("ListarViewUsuario")]
         public async Task<ActionResult<PaginacionResponse<UsuarioListaDto>>> ListarViewUsuario(int pagina = 1, int resultadoPorPagina = 20)
@@ -280,9 +281,9 @@ namespace ApiBiblioteca.Controllers
 
 
                 var emailBody = $"<p>Hola {nuevoUsuario.Nombre},</p>" +
-                                "<p>Gracias por registrarte. Por favor, haz clic en el siguiente enlace para confirmar tu correo electrónico:</p>";
+                                "<p>¡Hola! Te damos la bienvenida. Tu cuenta ha sido creada correctamente y ya puedes empezar a explorar todo lo que tenemos para ti.</p>";
                 
-                await _emailService.SendAsync(nuevoUsuario.Email, "Confirmación de Registro", emailBody);
+                await _emailService.SendAsync(nuevoUsuario.Email, "Bienvenida", emailBody);
 
                 return Ok(new { mensaje = "Usuario registrado exitosamente", idUsuario = nuevoUsuario.IdUsuario });
             }
@@ -434,7 +435,7 @@ namespace ApiBiblioteca.Controllers
         /*
          * Metodo para ver el perfil de un usuario
          */
-
+        [Authorize(Policy ="GeneralPolicy")]
         [HttpGet("PerfilUsuario")]
         public async Task<ActionResult<PerfilUsuario>> PerfilUsuario(int idUsuario)
         {
@@ -468,7 +469,7 @@ namespace ApiBiblioteca.Controllers
                 return StatusCode(500, new { mensaje = "Error interno del servidor", error = ex.Message });
             }
         }
-
+        [Authorize(Policy = "GeneralPolicy")]
         [HttpPut("EditarPerfil")]
         public async Task<IActionResult> EditarPerfil([FromBody] PerfilUsuario editarPerfil)
         {
