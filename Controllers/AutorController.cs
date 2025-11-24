@@ -94,7 +94,7 @@ namespace ApiBiblioteca.Controllers
                         IdAutor = a.IdAutor,
                         Nombre = a.Nombre
                     })
-                    .Skip((pagina - 1) * resultadoPorPagina) // ✅ Skip correcto
+                    .Skip((pagina - 1) * resultadoPorPagina)
                     .Take(resultadoPorPagina)
                     .ToListAsync();
 

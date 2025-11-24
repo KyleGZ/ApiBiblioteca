@@ -9,7 +9,7 @@
         public string? Estado { get; set; }
         public string? Descripcion { get; set; }
         public string? PortadaUrl { get; set; }
-        public string? Autores { get; set; }   // Nombres separados por coma
-        public string? Generos { get; set; } // Nombres separados por coma
+        public string? Autores { get; set; }   
+        public string? Generos { get; set; } 
     }
 }

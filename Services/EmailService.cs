@@ -23,7 +23,7 @@ namespace ApiBiblioteca.Services
 
             _crypto = new CryptoHelper(configuration);
 
-            // ✅ 1. Usa IWebHostEnvironment para que funcione tanto en desarrollo como en producción
+            // Usa IWebHostEnvironment para que funcione tanto en desarrollo como en producción
             _filePath = Path.Combine(env.ContentRootPath, "App_Data", "emailsettings.json");
 
             // Cargar configuración inicial
@@ -54,30 +54,6 @@ namespace ApiBiblioteca.Services
 
             return settings;
         }
-
-
-        //private async Task<EmailSettings> LoadSettingsAsync()
-        //{
-        //    if (!File.Exists(_filePath))
-        //    {
-        //        _logger.LogWarning("Archivo de configuración de correo no encontrado en {Path}. Se usará configuración vacía.", _filePath);
-        //        return new EmailSettings();
-        //    }
-
-        //    var json = await File.ReadAllTextAsync(_filePath);
-        //    var settings = System.Text.Json.JsonSerializer.Deserialize<EmailSettings>(json) ?? new EmailSettings();
-
-        //    if (!string.IsNullOrWhiteSpace(settings.Password))
-        //    {
-        //        try { settings.Password = _protector.Unprotect(settings.Password); }
-        //        catch { settings.Password = string.Empty; }
-        //    }
-
-        //    return settings;
-        //}
-
-
-
         /*
          * Envía un correo electrónico simple sin archivos adjuntos.
          */
@@ -149,47 +125,9 @@ namespace ApiBiblioteca.Services
         {
             return await LoadSettingsAsync();
         }
-
-
-        //public async Task UpdateSettingsAsync(EmailSettings newSettings)
-        //{
-        //    if (string.IsNullOrWhiteSpace(newSettings.SmtpHost))
-        //        throw new ArgumentException("El servidor SMTP no puede estar vacío.");
-        //    if (string.IsNullOrWhiteSpace(newSettings.FromEmail))
-        //        throw new ArgumentException("El correo de origen no puede estar vacío.");
-
-        //    // ✅ 2. Asegurar carpeta App_Data
-        //    Directory.CreateDirectory(Path.GetDirectoryName(_filePath)!);
-
-        //    // Crear respaldo
-        //    if (File.Exists(_filePath))
-        //    {
-        //        var backupPath = _filePath.Replace(".json", $"_backup_{DateTime.Now:yyyyMMddHHmmss}.json");
-        //        File.Copy(_filePath, backupPath, true);
-        //    }
-
-        //    // Encriptar contraseña antes de guardar
-        //    if (!string.IsNullOrWhiteSpace(newSettings.Password))
-        //    {
-        //        newSettings.Password = _protector.Protect(newSettings.Password);
-        //    }
-
-        //    // Guardar archivo
-        //    var json = System.Text.Json.JsonSerializer.Serialize(newSettings, new System.Text.Json.JsonSerializerOptions
-        //    {
-        //        WriteIndented = true
-        //    });
-
-        //    await File.WriteAllTextAsync(_filePath, json);
-        //    _logger.LogInformation("Configuración de correo actualizada correctamente en {Path}.", _filePath);
-
-        //    // ✅ 3. Recargar configuración en memoria
-        //    _emailSettings = await LoadSettingsAsync();
-        //}
-
         public async Task<ApiResponse> UpdateSettingsAsync(UpdateEmailSettings newSettings)
         {
-            // 🧱 1. Validar campos obligatorios (excepto la contraseña)
+            //Validar campos obligatorios (excepto la contraseña)
             if (string.IsNullOrWhiteSpace(newSettings.SmtpHost))
                 return new ApiResponse { Success = false, Message = "El servidor SMTP no puede estar vacío." };
 
@@ -210,10 +148,10 @@ namespace ApiBiblioteca.Services
 
             try
             {
-                // 🗂️ 2. Asegurar carpeta App_Data
+                // Asegurar carpeta App_Data
                 Directory.CreateDirectory(Path.GetDirectoryName(_filePath)!);
 
-                // 📂 3. Cargar configuración actual
+                // Cargar configuración actual
                 EmailSettings currentSettings;
                 if (File.Exists(_filePath))
                 {
@@ -225,14 +163,14 @@ namespace ApiBiblioteca.Services
                     currentSettings = new EmailSettings();
                 }
 
-                // 💾 4. Crear respaldo
+                // Crear respaldo
                 if (File.Exists(_filePath))
                 {
                     var backupPath = _filePath.Replace(".json", $"_backup_{DateTime.Now:yyyyMMddHHmmss}.json");
                     File.Copy(_filePath, backupPath, true);
                 }
 
-                // 🔄 5. Asignar nuevos valores (campos obligatorios)
+                // Asignar nuevos valores (campos obligatorios)
                 currentSettings.SmtpHost = newSettings.SmtpHost;
                 currentSettings.SmtpPort = newSettings.SmtpPort;
                 currentSettings.UseStartTls = newSettings.UseStartTls;
@@ -240,14 +178,13 @@ namespace ApiBiblioteca.Services
                 currentSettings.FromName = newSettings.FromName;
                 currentSettings.Username = newSettings.Username;
 
-                // 🔐 6. Manejar la contraseña (solo actualizar si se envía)
+                // Manejar la contraseña (solo actualizar si se envía)
                 if (!string.IsNullOrWhiteSpace(newSettings.Password))
                 {
                     currentSettings.Password = _crypto.Encrypt(newSettings.Password);
                 }
-                // Si viene null o vacía → conservar la anterior (no se hace nada)
 
-                // 🧾 7. Guardar archivo actualizado
+                // Guardar archivo actualizado
                 var json = System.Text.Json.JsonSerializer.Serialize(currentSettings, new System.Text.Json.JsonSerializerOptions
                 {
                     WriteIndented = true
@@ -256,7 +193,7 @@ namespace ApiBiblioteca.Services
                 await File.WriteAllTextAsync(_filePath, json);
                 _logger.LogInformation("Configuración de correo actualizada correctamente en {Path}.", _filePath);
 
-                // ♻️ 8. Recargar configuración en memoria
+                // Recargar configuración en memoria
                 _emailSettings = await LoadSettingsAsync();
 
                 return new ApiResponse { Success = true, Message = "Configuración de correo actualizada correctamente." };

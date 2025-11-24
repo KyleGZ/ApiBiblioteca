@@ -49,8 +49,6 @@ namespace ApiBiblioteca.Controllers
         }
 
         [Authorize(Policy = "StaffOnly")]
-
-        // ========= NUEVOS (ApiResponse no genérico) =========
         [HttpGet("ListarViewSeccion")]
         public async Task<ActionResult<ApiResponse>> ListarViewSeccion(int pagina = 1, int resultadoPorPagina = 20)
         {
@@ -177,7 +175,6 @@ namespace ApiBiblioteca.Controllers
                     return Conflict(api);
                 }
 
-                // La entidad requiere Ubicacion; si no la manejas en el front, se deja un valor por defecto:
                 var nueva = new Seccion { Nombre = nombre, Ubicacion = "Sin ubicación" };
                 _context.Seccions.Add(nueva);
                 await _context.SaveChangesAsync();

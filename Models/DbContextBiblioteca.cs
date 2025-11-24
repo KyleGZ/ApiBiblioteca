@@ -301,32 +301,6 @@ public partial class DbContextBiblioteca : DbContext
                 .HasConstraintName("FK__notificac__id_us__02084FDA");
         });
 
-
-        //modelBuilder.Entity<Notificacion>(entity =>
-        //{
-        //    entity.HasKey(e => e.IdNotificacion).HasName("PK__notifica__8270F9A516AB145F");
-
-        //    entity.ToTable("notificacion");
-
-        //    entity.Property(e => e.IdNotificacion).HasColumnName("id_notificacion");
-        //    entity.Property(e => e.Asunto)
-        //        .HasMaxLength(200)
-        //        .IsUnicode(false)
-        //        .HasColumnName("asunto");
-        //    entity.Property(e => e.FechaEnvio)
-        //        .HasDefaultValueSql("(getdate())")
-        //        .HasColumnName("fecha_envio");
-        //    entity.Property(e => e.IdUsuario).HasColumnName("id_usuario");
-        //    entity.Property(e => e.Mensaje)
-        //        .HasColumnType("text")
-        //        .HasColumnName("mensaje");
-
-        //    entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.Notificacions)
-        //        .HasForeignKey(d => d.IdUsuario)
-        //        .OnDelete(DeleteBehavior.ClientSetNull)
-        //        .HasConstraintName("FK__notificac__id_us__02084FDA");
-        //});
-
         modelBuilder.Entity<Prestamo>(entity =>
         {
             entity.HasKey(e => e.IdPrestamo).HasName("PK__prestamo__5E87BE2724225C6C");
@@ -536,7 +510,7 @@ public partial class DbContextBiblioteca : DbContext
                 .HasDefaultValueSql("SYSUTCDATETIME()")
                 .ValueGeneratedOnAdd();
 
-            // 🔥 Clave: relación explícita con el FK correcto
+            // relación explícita con el FK correcto
             entity.HasOne(d => d.Usuario)
                 .WithMany(p => p.PasswordResetTokens)
                 .HasForeignKey(d => d.IdUsuario)

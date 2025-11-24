@@ -28,7 +28,7 @@ namespace ApiBiblioteca.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(new { success = false, message = "Datos inválidos", errors = ModelState.Values.SelectMany(v => v.Errors) });
 
-                // Llamar al servicio - NO esperamos que termine
+                // Llamar al servicio
                 _ = _bitacoraService.RegistrarAccionAsync(
                     request.IdUsuario,
                     request.Accion,

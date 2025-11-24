@@ -26,7 +26,7 @@ namespace ApiBiblioteca.Services
             {
                 _logger.LogInformation($"Iniciando proceso de reset para: {email}");
 
-                // 1. Buscar usuario por email
+                // Buscar usuario por email
                 var user = await _context.Usuarios
                     .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
 
@@ -40,7 +40,7 @@ namespace ApiBiblioteca.Services
                     };
                 }
 
-                // 2. Verificar si el usuario está activo
+                // Verificar si el usuario está activo
                 if (user.Estado?.ToLower() != "activo")
                 {
                     return new ApiResponse
@@ -50,11 +50,11 @@ namespace ApiBiblioteca.Services
                     };
                 }
 
-                // 3. Generar token seguro
+                // Generar token seguro
                 var token = GenerateSecureToken();
                 var expiration = DateTime.UtcNow.AddHours(1);
 
-                // 4. Guardar token usando EF normal (debería funcionar ahora)
+                // Guardar token usando EF normal (debería funcionar ahora)
                 var resetToken = new PasswordResetToken
                 {
                     IdUsuario = user.IdUsuario,
@@ -70,7 +70,7 @@ namespace ApiBiblioteca.Services
 
                 _logger.LogInformation($"Token guardado exitosamente para usuario ID: {user.IdUsuario}");
 
-                // 5. Construir enlace de reset
+                // Construir enlace de reset
 
                 var webAppBaseUrl = _configuration["WebAppSettings:BaseUrl"].TrimEnd('/');
                 var resetPasswordPath = _configuration["WebAppSettings:ResetPasswordPath"].TrimStart('/');
@@ -78,7 +78,7 @@ namespace ApiBiblioteca.Services
 
                 var resetLink = $"{webAppBaseUrl}/{resetPasswordPath}?token={Uri.EscapeDataString(token)}";
 
-                // 6. Preparar y enviar email
+                // Preparar y enviar email
                 var fechaSolicitud = DateTime.Now;
                 var emailBody = $@"
                 <p>Hola {user.Nombre},</p>
@@ -116,104 +116,6 @@ namespace ApiBiblioteca.Services
             }
         }
 
-        //public async Task<ApiResponse> GenerateAndSendResetTokenAsync(string email)
-        //{
-        //    try
-        //    {
-        //        // 1. Buscar usuario por email
-        //        var user = await _context.Usuarios
-        //            .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
-
-        //        if (user == null)
-        //        {
-        //            _logger.LogWarning($"Intento de reset de contraseña para email no registrado: {email}");
-        //            // Por seguridad, devolvemos éxito aunque no exista
-        //            return new ApiResponse
-        //            {
-        //                Success = true,
-        //                Message = "Si el email existe en nuestro sistema, recibirás un enlace para restablecer tu contraseña."
-        //            };
-        //        }
-
-        //        // 2. Verificar si el usuario está activo
-        //        if (user.Estado?.ToLower() != "activo")
-        //        {
-        //            _logger.LogWarning($"Intento de reset para usuario inactivo: {email}");
-        //            return new ApiResponse
-        //            {
-        //                Success = false,
-        //                Message = "Tu cuenta no está activa. Contacta al administrador."
-        //            };
-        //        }
-
-        //        // 3. Generar token seguro
-        //        var token = GenerateSecureToken();
-
-        //        // 4. Calcular expiración (1 hora)
-        //        var expiration = DateTime.UtcNow.AddHours(1);
-
-        //        // 5. Guardar token en BD
-        //        var resetToken = new PasswordResetToken
-        //        {
-        //            IdUsuario = user.IdUsuario,
-        //            Token = token,
-        //            Expires = expiration,
-        //            Used = false,
-        //            CreatedAt = DateTime.UtcNow
-        //        };
-
-        //        _context.PasswordResetTokens.Add(resetToken);
-        //        await _context.SaveChangesAsync();
-
-        //        // 6. Construir enlace de reset
-        //        var resetLink = $"https://tudominio.com/Usuario/ResetPassword?token={token}";
-
-        //        // 7. Preparar contenido del email
-        //        var fechaSolicitud = DateTime.Now;
-        //        var emailBody = $@"
-        //        <p>Hola {user.Nombre},</p>
-        //        <p>Se ha recibido una solicitud de intento de recuperación de contraseña para su cuenta. Si no fue usted quien realizó esta acción, puede ignorar este correo o contactarnos de inmediato.</p>
-        //        <p><strong>Detalles de la solicitud:</strong></p>
-        //        <ul>
-        //          <li>Fecha y hora: {fechaSolicitud}</li>
-        //          <li>Estado: En proceso</li>
-        //        </ul>
-        //        <p>Para restablecer su contraseña, haga clic en el siguiente enlace:</p>
-        //        <p><a href=""{resetLink}"" target=""_blank"">Restablecer mi contraseña</a></p>
-        //        <p>Si el enlace no funciona, copie y pegue la URL en su navegador:</p>
-        //        <p>{resetLink}</p>
-        //        <p>Este enlace caducará en 1 hora. Si necesita asistencia, responda a este correo o comuníquese con el soporte.</p>";
-
-        //        await _emailService.SendAsync(email, "Recuperación de Contraseña", emailBody);
-
-        //        _logger.LogInformation($"Token de reset generado para usuario: {user.Email}");
-
-        //        return new ApiResponse
-        //        {
-        //            Success = true,
-        //            Message = "Si el email existe en nuestro sistema, recibirás un enlace para restablecer tu contraseña.",
-        //            Data = new { tokenExpires = expiration }
-        //        };
-        //    }
-        //    catch (DbUpdateException dbEx)
-        //    {
-        //        _logger.LogError(dbEx, $"Error de base de datos generando token para: {email}");
-        //        return new ApiResponse
-        //        {
-        //            Success = false,
-        //            Message = "Error al procesar la solicitud. Por favor, intenta nuevamente."
-        //        };
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, $"Error generando token de reset para: {email}");
-        //        return new ApiResponse
-        //        {
-        //            Success = false,
-        //            Message = "Error interno del servidor. Por favor, intenta más tarde."
-        //        };
-        //    }
-        //}
         public async Task<ApiResponse> ValidateResetTokenAsync(string token)
         {
             if (string.IsNullOrEmpty(token))
@@ -262,14 +164,14 @@ namespace ApiBiblioteca.Services
         {
             try
             {
-                // 1. Validar token
+                // Validar token
                 var validationResult = await ValidateResetTokenAsync(token);
                 if (!validationResult.Success)
                 {
                     return validationResult; // Retorna el mismo error de validación
                 }
 
-                // 2. Obtener el token con usuario
+                // Obtener el token con usuario
                 var resetToken = await _context.PasswordResetTokens
                     .Include(t => t.Usuario)
                     .FirstOrDefaultAsync(t =>
@@ -283,20 +185,20 @@ namespace ApiBiblioteca.Services
                     return new ApiResponse { Success = false, Message = "Token no válido." };
                 }
 
-                // 3. Verificar que la nueva contraseña sea diferente a la anterior
+                // Verificar que la nueva contraseña sea diferente a la anterior
                 if (VerifyPassword(resetToken.Usuario.Password, newPassword))
                 {
                     return new ApiResponse { Success = false, Message = "La nueva contraseña no puede ser igual a la anterior." };
                 }
 
-                // 4. Marcar token como usado
+                // Marcar token como usado
                 resetToken.Used = true;
 
-                // 5. Actualizar contraseña del usuario
+                // Actualizar contraseña del usuario
                 var oldPasswordHash = resetToken.Usuario.Password; // Para logging
                 resetToken.Usuario.Password = HashPassword(newPassword);
 
-                // 6. Guardar cambios
+                // Guardar cambios
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation($"Contraseña restablecida exitosamente para usuario: {resetToken.Usuario.Email}");
@@ -352,14 +254,6 @@ namespace ApiBiblioteca.Services
             }
         }
 
-        //private string GenerateSecureToken()
-        //{
-        //    return Convert.ToBase64String(Guid.NewGuid().ToByteArray())
-        //        .Replace("+", "")
-        //        .Replace("/", "")
-        //        .Replace("=", "");
-        //}
-
         private string GenerateSecureToken()
         {
             var bytes = RandomNumberGenerator.GetBytes(32);
@@ -370,7 +264,7 @@ namespace ApiBiblioteca.Services
 
         private string HashPassword(string password)
         {
-            // ⚠️ IMPORTANTE: Usa el mismo método de hashing que en tu login actual
+            // Usa el mismo método de hashing que en tu login actual
             return BCrypt.Net.BCrypt.HashPassword(password);
         }
 

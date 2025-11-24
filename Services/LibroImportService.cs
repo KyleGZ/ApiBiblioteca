@@ -246,7 +246,7 @@ namespace ApiBiblioteca.Services
 
             var worksheet = package.Workbook.Worksheets.Add("Plantilla Libros");
 
-            // 📋 Encabezados
+            // Encabezados
             var encabezados = new[]
             {
         "Titulo", "Isbn", "Editorial", "Seccion", "Estado", "Descripcion", "PortadaUrl", "Autores", "Generos"
@@ -260,7 +260,7 @@ namespace ApiBiblioteca.Services
                 worksheet.Cells[1, i + 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
             }
 
-            // 🧾 Ejemplo de fila de muestra
+            // Ejemplo de fila de muestra
             worksheet.Cells[2, 1].Value = "El Quijote";
             worksheet.Cells[2, 2].Value = "9781234567890";
             worksheet.Cells[2, 3].Value = "Editorial Ejemplo";
@@ -273,7 +273,7 @@ namespace ApiBiblioteca.Services
 
             worksheet.Cells.AutoFitColumns();
 
-            // 🧱 Devuelve el Excel como byte[]
+            // Devuelve el Excel como byte[]
             return await Task.FromResult(package.GetAsByteArray());
         }
 

@@ -4,7 +4,7 @@
     {
         public string Token { get; set; }
         public bool Resultado { get; set; }
-        public string Msj { get; set; }  // Asegúrate que sea "Msj" no "Msg"
+        public string Msj { get; set; }  
         public int idUsuario { get; set; }
         public string Email { get; set; }
         public string Nombre { get; set; }

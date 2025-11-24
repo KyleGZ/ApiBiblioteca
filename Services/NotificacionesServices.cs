@@ -154,7 +154,7 @@ namespace ApiBiblioteca.Services
             {
                 var fechaCorte = DateTime.Now.AddDays(-diasExpiracion);
 
-                // 1) Obtener reservas activas que ya vencieron
+                // Obtener reservas activas que ya vencieron
                 var reservasVencidas = await _context.Reservas
                     .Include(r => r.IdLibroNavigation)
                     .Include(r => r.IdUsuarioNavigation)
@@ -179,18 +179,18 @@ namespace ApiBiblioteca.Services
                     var libro = reserva.IdLibroNavigation;
                     var usuario = reserva.IdUsuarioNavigation;
 
-                    // 2) Marcar como expirada
+                    // Marcar como expirada
                     reserva.Estado = "Expirada";
                     reservasProcesadas++;
 
-                    // 3) Liberar el libro (solo si sigue estando reservado)
+                    // Liberar el libro (solo si sigue estando reservado)
                     if (libro != null && libro.Estado == "Reservado")
                     {
                         libro.Estado = "Disponible";
                         librosLiberados++;
                     }
 
-                    // 4) Notificar al usuario
+                    // Notificar al usuario
                     if (usuario != null && !string.IsNullOrEmpty(usuario.Email))
                     {
                         string asunto = "Tu reserva ha expirado";

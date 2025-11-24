@@ -12,11 +12,10 @@ namespace ApiBiblioteca.Controllers
     {
         public DateTime FechaVencimiento { get; set; }
     }
-    [Authorize(Policy = "StaffOnly")] // Solo Admin y Supervisor pueden acceder)]
+    [Authorize(Policy = "StaffOnly")] 
 
     [ApiController]
     [Route("api/[controller]")]
-    //[Authorize] // Añadir esto para requerir autenticación
     public class PrestamosController : ControllerBase
     {
         private readonly DbContextBiblioteca _context;
@@ -33,7 +32,6 @@ namespace ApiBiblioteca.Controllers
             _estadisticasService = estadisticasService;
         }
 
-        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         //Ultimo prestamo emitido
         [HttpGet("ultimo")]
         public async Task<ActionResult<object>> GetUltimoPrestamo()
@@ -115,7 +113,7 @@ namespace ApiBiblioteca.Controllers
                     return BadRequest(new { message = "La fecha de vencimiento debe ser posterior a la fecha de préstamo" });
                 }
 
-                // ✅ ACTUALIZAR ESTADO DEL LIBRO
+                // ACTUALIZAR ESTADO DEL LIBRO
                 libro.Estado = "Prestado";
 
                 var prestamo = new Prestamo
@@ -331,7 +329,7 @@ namespace ApiBiblioteca.Controllers
                 
                 if (prestamo.IdLibroNavigation != null)
                 {
-                    prestamo.IdLibroNavigation.Estado = "Disponible"; // o "Disponible"
+                    prestamo.IdLibroNavigation.Estado = "Disponible"; 
                 }
 
                 await _context.SaveChangesAsync();

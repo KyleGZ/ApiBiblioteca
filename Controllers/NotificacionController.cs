@@ -56,7 +56,6 @@ namespace ApiBiblioteca.Controllers
             }
             catch (Exception ex)
             {
-                // Opcional: puedes también devolver StatusCode(500, "mensaje") o registrar el error
                 return StatusCode(500, $"Ocurrió un error al obtener las notificaciones: {ex.Message}");
             }
         }

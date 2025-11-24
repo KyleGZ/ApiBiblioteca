@@ -50,7 +50,6 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
-        // ========= NUEVOS (ApiResponse no genérico) =========
         [Authorize(Policy = "StaffOnly")]
 
         [HttpGet("ListarViewGenero")]

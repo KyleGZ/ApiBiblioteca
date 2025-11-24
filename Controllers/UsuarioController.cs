@@ -174,7 +174,7 @@ namespace ApiBiblioteca.Controllers
                         Estado = u.Estado,
                         Roles = u.IdRols.Select(ur => ur.NombreRol).ToList()
                     })
-                    .Skip((pagina - 1) * resultadoPorPagina) // Corrección: Skip en lugar de Skyp
+                    .Skip((pagina - 1) * resultadoPorPagina) 
                     .Take(resultadoPorPagina)
                     .ToListAsync();
 
@@ -617,13 +617,6 @@ namespace ApiBiblioteca.Controllers
         }
 
     }
-
-
-
-
-
-
-
 
 }
 

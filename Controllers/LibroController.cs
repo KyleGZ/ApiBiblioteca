@@ -34,9 +34,9 @@ namespace ApiBiblioteca.Controllers
             try
             {
                 var query = _context.Libros
-                    .Include(l => l.IdEditorialNavigation) // Editorial
-                    .Include(l => l.IdAutors)              // Autores (N:N)
-                    .Include(l => l.IdGeneros)             // Géneros (N:N)
+                    .Include(l => l.IdEditorialNavigation) 
+                    .Include(l => l.IdAutors)              
+                    .Include(l => l.IdGeneros)             
                     .AsQueryable();
 
                 // Obtener total de resultados
@@ -185,7 +185,7 @@ namespace ApiBiblioteca.Controllers
                 IQueryable<Libro> query = null;
                 string tipoBusqueda = "";
 
-                // Paso 1: Buscar por ISBN exacto
+                // Buscar por ISBN exacto
                 var resultadosISBN = await _context.Libros
                     .Include(l => l.IdAutors)
                     .Include(l => l.IdEditorialNavigation)
@@ -210,7 +210,7 @@ namespace ApiBiblioteca.Controllers
                     return PaginarResultados(resultadosISBN, pagina, resultadosPorPagina, tipoBusqueda);
                 }
 
-                // Paso 2: Buscar en título
+                // Buscar en título
                 var queryTitulo = _context.Libros
                     .Include(l => l.IdAutors)
                     .Include(l => l.IdEditorialNavigation)
@@ -253,7 +253,7 @@ namespace ApiBiblioteca.Controllers
                     };
                 }
 
-                // Paso 3: Buscar en autor
+                // Buscar en autor
                 var queryAutor = _context.Libros
                     .Include(l => l.IdAutors)
                     .Include(l => l.IdEditorialNavigation)
