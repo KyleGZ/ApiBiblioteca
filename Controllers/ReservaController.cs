@@ -24,21 +24,29 @@ namespace ApiBiblioteca.Controllers
 
         [HttpGet("ListaReservas")]
         public async Task<ActionResult<IEnumerable<ReservaResponseDto>>> GetReservas(
-            [FromQuery] int? userId = null,
-            [FromQuery] string? estado = null) 
+    [FromQuery] int? userId = null,
+    [FromQuery] string? estado = null,
+    [FromQuery] bool? esAdministrador = null)
         {
             var query = _context.Reservas
                 .Include(r => r.IdLibroNavigation)
                 .Include(r => r.IdUsuarioNavigation)
                 .AsQueryable();
 
-            // Filtrar por usuario 
-            if (userId.HasValue)
+            //SI NO ES ADMINISTRADOR, filtrar por usuario
+            if (!esAdministrador.HasValue || !esAdministrador.Value)
             {
-                query = query.Where(r => r.IdUsuario == userId.Value);
+                if (userId.HasValue)
+                {
+                    query = query.Where(r => r.IdUsuario == userId.Value);
+                }
+                else
+                {
+                    // Si no es admin y no hay userId, no mostrar nada
+                    return Ok(new List<ReservaResponseDto>());
+                }
             }
-
-            // Filtrar por estado
+            //SI ES ADMINISTRADOR, mostrar TODAS las reservas sin filtrar por usuario
             if (!string.IsNullOrEmpty(estado))
             {
                 if (estado == "Activa")
@@ -47,7 +55,7 @@ namespace ApiBiblioteca.Controllers
                 }
                 else if (estado == "NoActiva")
                 {
-                    query = query.Where(r => r.Estado != "Activa"); // Todas las que NO son activas
+                    query = query.Where(r => r.Estado != "Activa");
                 }
             }
 
@@ -68,7 +76,6 @@ namespace ApiBiblioteca.Controllers
 
             return Ok(reservas);
         }
-
 
         // Búsqueda por ID de reserva
         [HttpGet("BuscarReservaID")]
