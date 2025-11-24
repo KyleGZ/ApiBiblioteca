@@ -282,5 +282,27 @@ namespace ApiBiblioteca.Controllers
                 return StatusCode(500, api);
             }
         }
+
+        [Authorize(Policy = "GeneralPolicy")]
+        [HttpGet("Get-seccion")]
+        public async Task<ActionResult<int>> GetSeccion(string nombre)
+        {
+            try
+            {
+                var seccion = await _context.Seccions.FirstOrDefaultAsync(x => x.Nombre == nombre);
+                if (seccion == null)
+                {
+                    return NotFound(new { message = "Seccion no encontrada" });
+                }
+                var idSeccion = seccion.IdSeccion;
+                return Ok(idSeccion);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al obtener la seccion: {ex.Message}");
+                return StatusCode(500, new { error = "Error interno del servidor" });
+            }
+
+        }
     }
 }
