@@ -327,6 +327,8 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
+
+        [Authorize(Policy = "GeneralPolicy")]
         [HttpGet("Get-editorial")]
         public async Task<ActionResult<int>> GetEditorial(string nombre)
         {

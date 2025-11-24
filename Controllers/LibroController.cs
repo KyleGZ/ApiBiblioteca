@@ -771,6 +771,7 @@ namespace ApiBiblioteca.Controllers
         }
 
         //*
+        [Authorize(Policy = "GeneralPolicy")]
         [HttpGet("Get-libro")]
         public async Task<ActionResult<int>> GetLibro(string isbn)
         {

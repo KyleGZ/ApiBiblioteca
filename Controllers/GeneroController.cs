@@ -282,6 +282,7 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
+        [Authorize(Policy = "GeneralPolicy")]
         [HttpGet("Get-genero")]
         public async Task<ActionResult<int>> GetGenero(string nombre)
         {

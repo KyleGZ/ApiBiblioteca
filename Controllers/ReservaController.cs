@@ -301,6 +301,8 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
+
+        //[Authorize(Policy = "GeneralPolicy")]
         //[HttpGet("Get-reserva")]
         //public async Task<ActionResult<int>> GetReserva(string idReserva)
         //{

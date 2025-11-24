@@ -526,6 +526,8 @@ namespace ApiBiblioteca.Controllers
                 return StatusCode(500, api);
             }
         }
+
+        [Authorize(Policy = "GeneralPolicy")]
         [HttpGet("Get-autor")]
         public async Task<ActionResult<int>> GetAutor(string nombre)
         {
