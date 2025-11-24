@@ -13,7 +13,7 @@ public partial class Bitacora
 
     public string TablaAfectada { get; set; } = null!;
 
-    public int IdRegistro { get; set; }
+    public int? IdRegistro { get; set; }
 
     public DateTime FechaHora { get; set; }
 

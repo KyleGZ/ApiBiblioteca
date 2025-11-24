@@ -4,6 +4,7 @@ using ApiBiblioteca.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ApiBiblioteca.Controllers
@@ -769,5 +770,26 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
+        //*
+        [HttpGet("Get-libro")]
+        public async Task<ActionResult<int>> GetLibro(string isbn)
+        {
+            try
+            {
+                var libro = await _context.Libros.FirstOrDefaultAsync(x => x.Isbn == isbn);
+                if (libro == null)
+                {
+                    return NotFound(new { message = "Libro no encontrado" });
+                }
+                var idLibro = libro.IdLibro;
+                return Ok(idLibro);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al obtener el libro: {ex.Message}");
+                return StatusCode(500, new { error = "Error interno del servidor" });
+            }
+
+        }
     }
 }
