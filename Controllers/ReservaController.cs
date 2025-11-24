@@ -301,5 +301,26 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
+        //[HttpGet("Get-reserva")]
+        //public async Task<ActionResult<int>> GetReserva(string idReserva)
+        //{
+        //    try
+        //    {
+        //        var autor = await _context.Reservas.FirstOrDefaultAsync(x => x.IdReserva == idReserva);
+        //        if (autor == null)
+        //        {
+        //            return NotFound(new { message = "Autor no encontrado" });
+        //        }
+        //        var idAutor = autor.IdAutor;
+        //        return Ok(idAutor);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Error al obtener el autor: {ex.Message}");
+        //        return StatusCode(500, new { error = "Error interno del servidor" });
+        //    }
+
+        //}
+
     }//
 }//

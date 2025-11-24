@@ -281,5 +281,26 @@ namespace ApiBiblioteca.Controllers
                 return StatusCode(500, api);
             }
         }
+
+        [HttpGet("Get-genero")]
+        public async Task<ActionResult<int>> GetGenero(string nombre)
+        {
+            try
+            {
+                var genero = await _context.Generos.FirstOrDefaultAsync(x => x.Nombre == nombre);
+                if (genero == null)
+                {
+                    return NotFound(new { message = "Genero no encontrado" });
+                }
+                var idGenero = genero.IdGenero;
+                return Ok(idGenero);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al obtener el genero: {ex.Message}");
+                return StatusCode(500, new { error = "Error interno del servidor" });
+            }
+
+        }
     }
 }

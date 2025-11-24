@@ -327,6 +327,27 @@ namespace ApiBiblioteca.Controllers
             }
         }
 
+        [HttpGet("Get-editorial")]
+        public async Task<ActionResult<int>> GetEditorial(string nombre)
+        {
+            try
+            {
+                var editorial = await _context.Editorials.FirstOrDefaultAsync(x => x.Nombre == nombre);
+                if (editorial == null)
+                {
+                    return NotFound(new { message = "Editorial no encontrado" });
+                }
+                var idEditorial = editorial.IdEditorial;
+                return Ok(idEditorial);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al obtener la editorial: {ex.Message}");
+                return StatusCode(500, new { error = "Error interno del servidor" });
+            }
+
+        }
+
 
     }
 }

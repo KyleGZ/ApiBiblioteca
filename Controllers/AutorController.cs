@@ -526,7 +526,26 @@ namespace ApiBiblioteca.Controllers
                 return StatusCode(500, api);
             }
         }
+        [HttpGet("Get-autor")]
+        public async Task<ActionResult<int>> GetAutor(string nombre)
+        {
+            try
+            {
+                var autor = await _context.Autors.FirstOrDefaultAsync(x => x.Nombre == nombre);
+                if (autor == null)
+                {
+                    return NotFound(new { message = "Autor no encontrado" });
+                }
+                var idAutor = autor.IdAutor;
+                return Ok(idAutor);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al obtener el autor: {ex.Message}");
+                return StatusCode(500, new { error = "Error interno del servidor" });
+            }
 
+        }
 
 
     }
